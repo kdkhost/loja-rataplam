@@ -41,7 +41,7 @@
                                             </a></h4>
 
                                         @foreach ($item['attribute']['option_name'] as $optionkey => $option_name)
-                                            <span><em>{{ $item['attribute']['names'][$optionkey] }}:</em>
+                                            <span><em>{{ __($item['attribute']['names'][$optionkey]) }}:</em>
                                                 {{ $option_name }} </span>
                                         @endforeach
                                     </div>

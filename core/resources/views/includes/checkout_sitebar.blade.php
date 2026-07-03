@@ -86,7 +86,7 @@
 
                     @foreach ($item['attribute']['option_name'] as $optionkey => $option_name)
                         <div class="entry-meta">
-                            <span class="entry-meta d-inline">{{ $item['attribute']['names'][$optionkey] }}:</span>
+                            <span class="entry-meta d-inline">{{ __($item['attribute']['names'][$optionkey]) }}:</span>
                             <span class="entry-meta d-inline"><b>{{ $option_name }}</b></span>
                         </div>
                     @endforeach
