@@ -64,7 +64,7 @@
                         bg-dark
                         @elseif($item->is_type == 'flash_deal')
                             bg-success @endif
-                        ">{{ __($item->is_type != 'undefine' ? ucfirst(str_replace('_', ' ', $item->is_type)) : '') }}</span>
+                        ">{{ __($item->is_type != 'undefine' ? __(ucfirst(str_replace('_',' ',$item->is_type))) : '') }}</span>
                     @else
                         <span class="product-badge bg-secondary border-default text-body">{{ __('out of stock') }}</span>
                     @endif
@@ -470,7 +470,7 @@
                                     @elseif($related->is_type == 'flash_deal')
                                     bg-success @endif
                                     ">
-                                                {{ $related->is_type != 'undefine' ? ucfirst(str_replace('_', ' ', $related->is_type)) : '' }}
+                                                {{ $related->is_type != 'undefine' ? __(ucfirst(str_replace('_',' ',$related->is_type))) : '' }}
                                             </div>
                                         @endif
                                     @else

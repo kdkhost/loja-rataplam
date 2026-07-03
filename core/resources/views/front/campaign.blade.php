@@ -58,7 +58,7 @@
                             bg-success
                             @endif
                             ">
-                            {{   ucfirst(str_replace('_',' ',$compaign_item->item->is_type))   }}
+                            {{   __(ucfirst(str_replace('_',' ',$compaign_item->item->is_type)))   }}
                             </div>
 
                             @else

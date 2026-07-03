@@ -31,7 +31,7 @@
         @if($data->is_type == 'undefine')
             {{ __('Not Define') }}
         @else
-            {{$data->is_type ? ucfirst(str_replace('_',' ',$data->is_type)) : __('undefine')}}
+            {{$data->is_type ? __(ucfirst(str_replace('_',' ',$data->is_type))) : __('undefine')}}
         @endif
         </p>
     </td>

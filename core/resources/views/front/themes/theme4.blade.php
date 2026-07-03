@@ -332,7 +332,7 @@
                                                             @elseif($item->is_type == 'flash_deal')
                                                             bg-success
                                                             @endif
-                                                            "> {{   ucfirst(str_replace('_',' ',$item->is_type))   }}
+                                                            "> {{   __(ucfirst(str_replace('_',' ',$item->is_type)))   }}
                                                         </div>
                                                     @endif
                                                     @else

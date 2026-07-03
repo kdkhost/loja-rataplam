@@ -1,0 +1,137 @@
+<?php
+
+$dict = [
+    'A??es' => 'Ações',
+    'A??o' => 'Ação',
+    'Informa??es' => 'Informações',
+    'Informa??o' => 'Informação',
+    'Descri??es' => 'Descrições',
+    'Descri??o' => 'Descrição',
+    'c?digo' => 'código',
+    'C?digo' => 'Código',
+    'n?mero' => 'número',
+    'N?mero' => 'Número',
+    'transa??o' => 'transação',
+    'Transa??o' => 'Transação',
+    'Avalia??es' => 'Avaliações',
+    'Avalia??o' => 'Avaliação',
+    'licen?a' => 'licença',
+    'Licen?a' => 'Licença',
+    'Manuten??o' => 'Manutenção',
+    'Navega??o' => 'Navegação',
+    'especifica??es' => 'especificações',
+    'Especifica??es' => 'Especificações',
+    'Confirma??o' => 'Confirmação',
+    'Observa??es' => 'Observações',
+    'endere?o' => 'endereço',
+    'Endere?o' => 'Endereço',
+    'Redefini??o' => 'Redefinição',
+    'aprova??o' => 'aprovação',
+    'Aprova??o' => 'Aprovação',
+    'Classifica??o' => 'Classificação',
+    'Pol?tica' => 'Política',
+    'devolu??o' => 'devolução',
+    'Devolu??o' => 'Devolução',
+    'altera??es' => 'alterações',
+    'Altera??es' => 'Alterações',
+    'Configura??es' => 'Configurações',
+    'Configura??o' => 'Configuração',
+    'Op??es' => 'Opções',
+    'Op??o' => 'Opção',
+    'Situa??o' => 'Situação',
+    'promo??es' => 'promoções',
+    'Promo??es' => 'Promoções',
+    'promo??o' => 'promoção',
+    'Promo??o' => 'Promoção',
+    'condi??es' => 'condições',
+    'Condi??es' => 'Condições',
+    'transfer?ncia' => 'transferência',
+    'Transfer?ncia' => 'Transferência',
+    'banc?ria' => 'bancária',
+    'Banc?ria' => 'Bancária',
+    'Verifica??o' => 'Verificação',
+    'verifica??o' => 'verificação',
+    'N?o' => 'Não',
+    'P?gina' => 'Página',
+    'p?gina' => 'página',
+    'm?nimo' => 'mínimo',
+    'm?ximo' => 'máximo',
+    'M?nimo' => 'Mínimo',
+    'M?ximo' => 'Máximo',
+    't?tulo' => 'título',
+    'T?tulo' => 'Título',
+    'pr?ximo' => 'próximo',
+    'Pr?ximo' => 'Próximo',
+    '?ltimo' => 'último',
+    '?ltima' => 'última',
+    '?ltimos' => 'últimos',
+    'Usu?rio' => 'Usuário',
+    'usu?rio' => 'usuário',
+    'Padr?o' => 'Padrão',
+    'padr?o' => 'padrão',
+    'Inscri??o' => 'Inscrição',
+    'inscri??o' => 'inscrição',
+    'Atualiza??o' => 'Atualização',
+    'atualiza??o' => 'atualização',
+    'Cole??o' => 'Coleção',
+    'cole??o' => 'coleção',
+    'Notifica??o' => 'Notificação',
+    'notifica??o' => 'notificação',
+    'Notifica??es' => 'Notificações',
+    'notifica??es' => 'notificações',
+    'f?sico' => 'físico',
+    'F?sico' => 'Físico',
+    'hist?rico' => 'histórico',
+    'Hist?rico' => 'Histórico',
+    'cat?logo' => 'catálogo',
+    'Cat?logo' => 'Catálogo',
+    'M?dia' => 'Mídia',
+    'm?dia' => 'mídia',
+    'E-mail' => 'E-mail',
+    'voc?' => 'você',
+    'Voc?' => 'Você',
+    'j?' => 'já',
+    'J?' => 'Já',
+    'at?' => 'até',
+    'At?' => 'Até',
+    's?' => 'só',
+    'S?' => 'Só',
+    'h?' => 'há',
+    'H?' => 'Há',
+    'exclu?do' => 'excluído',
+    'inclu?do' => 'incluído',
+    'pa?s' => 'país',
+    'Pa?s' => 'País',
+    've?culo' => 'veículo',
+    'pre?o' => 'preço',
+    'Pre?o' => 'Preço',
+    'servi?o' => 'serviço',
+    'Servi?o' => 'Serviço',
+    'carrinho' => 'carrinho', // nothing to replace, just testing
+    'd?vida' => 'dúvida',
+    'D?vida' => 'Dúvida',
+    's?bado' => 'sábado',
+    'domingo' => 'domingo',
+    'Informa??o adicionais' => 'Informações adicionais', // fallback
+    'In?cio' => 'Início',
+    'in?cio' => 'início'
+];
+
+$files = ['core/resources/lang/pt_website.json', 'core/resources/lang/pt_dashboard.json'];
+
+foreach ($files as $file) {
+    if (file_exists($file)) {
+        $content = file_get_contents($file);
+        
+        // Find everything with ? that is not a literal ? at the end of a sentence
+        // We can just do str_replace over the dictionary
+        $newContent = str_replace(array_keys($dict), array_values($dict), $content);
+        
+        file_put_contents($file, $newContent);
+        echo "Fixed $file\n";
+    }
+}
+
+// Let's also scan the database for '??' and replace them in the settings table
+// Actually, I will just fix the JSONs for now.
+echo "Translations fixed!\n";
