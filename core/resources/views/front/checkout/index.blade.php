@@ -126,8 +126,8 @@
                                                     <label for="checkout-country">{{ __('Country') }}</label>
                                                     <select class="form-control"  name="bill_country"
                                                         id="billing-country">
-                                                        <option selected>{{ __('Choose Country') }}</option>
-                                                        @foreach (DB::table('countries')->get() as $country)
+                                                        <option value="" selected disabled>{{ __('Choose Country') }}</option>
+                                                        @foreach ($countries as $country)
                                                             <option value="{{ $country->name }}"
                                                                 {{ isset($user) && $user->bill_country == $country->name ? 'selected' : '' }}>
                                                                 {{ $country->name }}</option>

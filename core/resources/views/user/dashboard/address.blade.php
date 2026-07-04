@@ -78,8 +78,8 @@
                       <div class="form-group">
                          <label for="billing-country">{{__('Country')}}</label>
                          <select class="form-control" name="bill_country" id="billing-country">
-                          <option selected>{{__('Choose Country')}}</option>
-                          @foreach (DB::table('countries')->get() as $country)
+                          <option value="" selected disabled>{{__('Choose Country')}}</option>
+                          @foreach ($countries as $country)
                           <option value="{{$country->name}}" {{$user->bill_country == $country->name ? 'selected' :''}} >{{$country->name}}</option>
                           @endforeach
                          </select>
@@ -165,8 +165,8 @@
                       <div class="form-group">
                          <label for="shipping-country">{{__('Country')}}</label>
                          <select class="form-control" name="ship_country" id="shipping-country">
-                            <option>{{__('Choose Country')}}</option>
-                            @foreach (DB::table('countries')->get() as $country)
+                            <option value="" selected disabled>{{__('Choose Country')}}</option>
+                            @foreach ($countries as $country)
                             <option value="{{$country->name}}" {{$user->ship_country == $country->name ? 'selected' :''}} >{{$country->name}}</option>
                             @endforeach
                          </select>

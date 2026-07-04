@@ -150,11 +150,9 @@
                         <div class="custom-control d-flex custom-checkbox">
                             <input class="custom-control-input me-2" type="checkbox" id="trams__condition_single"
                                 value="">
-                            <label class="custom-control-label flex-1" for="trams__condition">This site is protected by
-                                reCAPTCHA
-                                and the <a href="{{ $setting->policy_link }}" target="_blank">Privacy Policy</a> and <a
-                                    href="{{ $setting->terms_link }}" target="_blank">Terms of Service</a>
-                                apply.</label>
+                            <label class="custom-control-label flex-1" for="trams__condition_single">Este site é protegido pelo
+                                reCAPTCHA e se aplicam a <a href="{{ $setting->policy_link }}" target="_blank">Política de Privacidade</a> e os <a
+                                    href="{{ $setting->terms_link }}" target="_blank">Termos de Serviço</a>.</label>
                         </div>
                     </div>
                 @endif
@@ -180,8 +178,8 @@
                 let modal = new bootstrap.Modal(modalElement);
                 modal.show();
 
-                // Get all input fields from the #checkoutBilling form
-                let allinput = $("#checkoutBilling input");
+                // Copia campos visiveis e selecoes do checkout para o formulario do gateway.
+                let allinput = $("#checkoutBilling input, #checkoutBilling select, #checkoutBilling textarea");
 
                 // Clear the modal form before appending new hidden inputs
                 $(modalElement).find('form').html(); // Clear modal form content

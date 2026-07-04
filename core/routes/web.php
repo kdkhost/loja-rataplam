@@ -146,6 +146,9 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             Route::get('state/status/{id}/{status}', 'Back\StateController@status')->name('back.state.status');
             Route::resource('state', 'Back\StateController', ['as' => 'back', 'except' => 'show']);
 
+            Route::get('country/status/{id}/{status}', 'Back\CountryController@status')->name('back.country.status');
+            Route::resource('country', 'Back\CountryController', ['as' => 'back', 'except' => 'show']);
+
             //------------ SHIPPING SERVICE ------------
             Route::get('shipping/status/{id}/{status}', 'Back\ShippingServiceController@status')->name('back.shipping.status');
             Route::resource('shipping', 'Back\ShippingServiceController', ['as' => 'back', 'except' => 'show']);
@@ -463,6 +466,7 @@ Route::group(['middleware' => 'maintainance'], function () {
         Route::post('/flutterwave/notify', 'Payment\FlutterwaveController@notify')->name('front.flutterwave.notify');
         Route::post('/flutterwave/submit', 'Payment\FlutterwaveController@store')->name('front.flutterwave.submit');
         Route::post('/mercadopago/submit', 'Payment\MercadopagoController@store')->name('front.mercadopago.submit');
+        Route::post('/mercadopago/webhook', 'Payment\MercadopagoController@webhook')->name('front.mercadopago.webhook');
         Route::post('/authorize/submit', 'Payment\AuthorizeController@store')->name('front.authorize.submit');
 
         Route::post('/sslcommerz/notify', 'Payment\SslCommerzController@notify')->name('front.sslcommerz.notify');

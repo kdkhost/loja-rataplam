@@ -107,8 +107,8 @@
                                             <label for="checkout-country">{{ __('Country') }}</label>
                                             <select class="form-control {{ $errors->has('bill_country') ? 'requireInput' : '' }}"  name="bill_country"
                                                 id="billing-country">
-                                                <option selected>{{ __('Choose Country') }}</option>
-                                                @foreach (DB::table('countries')->get() as $country)
+                                                <option value="" selected disabled>{{ __('Choose Country') }}</option>
+                                                @foreach ($countries as $country)
                                                     <option value="{{ $country->name }}"
                                                         {{ isset($user) && $user->bill_country == $country->name ? 'selected' : '' }}>
                                                         {{ $country->name }}</option>
@@ -132,11 +132,10 @@
                                 <div class="form-group">
                                     <div class="custom-control custom-checkbox">
                                         <input class="custom-control-input" type="checkbox" id="trams__condition">
-                                        <label class="custom-control-label" for="trams__condition">This site is protected
-                                            by reCAPTCHA and the <a href="{{ $setting->policy_link }}"
-                                                target="_blank">Privacy Policy</a> and <a
-                                                href="{{ $setting->terms_link }}" target="_blank">Terms of Service</a>
-                                            apply.</label>
+                                        <label class="custom-control-label" for="trams__condition">Este site é protegido pelo
+                                            reCAPTCHA e se aplicam a <a href="{{ $setting->policy_link }}"
+                                                target="_blank">Política de Privacidade</a> e os <a
+                                                href="{{ $setting->terms_link }}" target="_blank">Termos de Serviço</a>.</label>
                                     </div>
                                 </div>
                             @endif

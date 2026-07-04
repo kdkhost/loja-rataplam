@@ -15,8 +15,138 @@ $(function ($) {
 			});
 		}
 
+        function applyBannerTextContrast() {
+            var targets = document.querySelectorAll('.hero-slider .item, .sright-image, .genius-banner');
+
+            function imageSource(target) {
+                var img = target.querySelector('img');
+                if (img) {
+                    return img.currentSrc || img.getAttribute('src') || img.getAttribute('data-src');
+                }
+
+                var background = window.getComputedStyle(target).backgroundImage || '';
+                var match = background.match(/url\(["']?(.*?)["']?\)/);
+                return match ? match[1] : '';
+            }
+
+            function textArea(target) {
+                return target.querySelector('.inner-content') || target.querySelector('.item-inner') || target.querySelector('.from-bottom') || target;
+            }
+
+            function drawCover(context, img, width, height) {
+                var imageWidth = img.naturalWidth || img.width;
+                var imageHeight = img.naturalHeight || img.height;
+                var scale = Math.max(width / imageWidth, height / imageHeight);
+                var drawWidth = imageWidth * scale;
+                var drawHeight = imageHeight * scale;
+                var dx = (width - drawWidth) / 2;
+                var dy = (height - drawHeight) / 2;
+                context.drawImage(img, dx, dy, drawWidth, drawHeight);
+            }
+
+            function sampleBounds(target, canvasWidth, canvasHeight) {
+                if (target.matches('.hero-slider .item')) {
+                    return { left: 0, top: 0, width: Math.ceil(canvasWidth * 0.48), height: canvasHeight };
+                }
+
+                var targetRect = target.getBoundingClientRect();
+                var textRect = textArea(target).getBoundingClientRect();
+                var scaleX = canvasWidth / Math.max(1, targetRect.width);
+                var scaleY = canvasHeight / Math.max(1, targetRect.height);
+                var paddingX = Math.max(12, textRect.width * 0.18);
+                var paddingY = Math.max(12, textRect.height * 0.18);
+
+                var left = Math.max(0, Math.floor((textRect.left - targetRect.left - paddingX) * scaleX));
+                var top = Math.max(0, Math.floor((textRect.top - targetRect.top - paddingY) * scaleY));
+                var right = Math.min(canvasWidth, Math.ceil((textRect.right - targetRect.left + paddingX) * scaleX));
+                var bottom = Math.min(canvasHeight, Math.ceil((textRect.bottom - targetRect.top + paddingY) * scaleY));
+
+                if (right <= left || bottom <= top) {
+                    return { left: 0, top: 0, width: Math.ceil(canvasWidth * 0.45), height: canvasHeight };
+                }
+
+                return { left: left, top: top, width: right - left, height: bottom - top };
+            }
+
+            function setFallback(target) {
+                target.classList.remove('banner-text-dark');
+                target.classList.toggle('banner-text-dark', target.matches('.hero-slider .item'));
+                target.classList.toggle('banner-text-light', !target.matches('.hero-slider .item'));
+            }
+
+            function calculate(target, src) {
+                if (!src) {
+                    setFallback(target);
+                    return;
+                }
+
+                var img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = function () {
+                    try {
+                        var canvas = document.createElement('canvas');
+                        var context = canvas.getContext('2d', { willReadFrequently: true });
+                        var rect = target.getBoundingClientRect();
+                        var isHero = target.matches('.hero-slider .item');
+                        var width = 96;
+                        var imageWidth = img.naturalWidth || img.width;
+                        var imageHeight = img.naturalHeight || img.height;
+                        var height = isHero
+                            ? Math.max(1, Math.round(imageHeight / Math.max(1, imageWidth) * width))
+                            : Math.max(1, Math.round(rect.height / Math.max(1, rect.width) * width));
+                        canvas.width = width;
+                        canvas.height = height;
+                        context.fillStyle = '#ffffff';
+                        context.fillRect(0, 0, width, height);
+                        if (isHero) {
+                            context.drawImage(img, 0, 0, width, height);
+                        } else {
+                            drawCover(context, img, width, height);
+                        }
+
+                        var bounds = sampleBounds(target, width, height);
+                        var data = context.getImageData(bounds.left, bounds.top, bounds.width, bounds.height).data;
+                        var total = 0;
+                        var count = 0;
+                        var brightCount = 0;
+                        var darkCount = 0;
+                        for (var i = 0; i < data.length; i += 16) {
+                            var alpha = data[i + 3];
+                            if (alpha < 20) continue;
+                            var luminance = (0.299 * data[i]) + (0.587 * data[i + 1]) + (0.114 * data[i + 2]);
+                            total += luminance;
+                            if (luminance >= 170) brightCount++;
+                            if (luminance <= 95) darkCount++;
+                            count++;
+                        }
+
+                        var brightness = count ? total / count : 0;
+                        var brightRatio = count ? brightCount / count : 0;
+                        var darkRatio = count ? darkCount / count : 0;
+                        var useDarkText = isHero
+                            ? (brightness >= 105 || brightRatio >= 0.18 || darkRatio < 0.55)
+                            : (darkRatio <= 0.65 && (brightness >= 110 || brightRatio >= 0.25));
+                        target.classList.toggle('banner-text-dark', useDarkText);
+                        target.classList.toggle('banner-text-light', !useDarkText);
+                    } catch (e) {
+                        setFallback(target);
+                    }
+                };
+                img.onerror = function () {
+                    setFallback(target);
+                };
+                img.src = src;
+            }
+
+            targets.forEach(function (target) {
+                calculate(target, imageSource(target));
+            });
+        }
+
 		$(document).ready(function(){
 			lazy();
+            applyBannerTextContrast();
+            setTimeout(applyBannerTextContrast, 1200);
 		})
 	// Flash Deal Area Start
     var $hero_slider_main = $(".hero-slider-main");
@@ -29,6 +159,10 @@ $(function ($) {
         autoplayTimeout: 7000,
         items: 1,
     });
+    $hero_slider_main.on('initialized.owl.carousel translated.owl.carousel refreshed.owl.carousel', function () {
+        applyBannerTextContrast();
+    });
+    setTimeout(applyBannerTextContrast, 300);
 
     // popular_category_slider
     var $popular_category_slider = $(".popular-category-slider");
@@ -276,10 +410,11 @@ $('.left-category-area .category-header').on('click', function(){
 $("[data-date-time]").each(function () {
     var $this = $(this),
         finalDate = $(this).attr("data-date-time");
+    var labels = window.language || {};
     $this.countdown(finalDate, function (event) {
         $this.html(
             event.strftime(
-                "<span>%D<small>Days</small></span></small> <span>%H<small>Hrs</small></span> <span>%M<small>Min</small></span> <span>%S<small>Sec</small></span>"
+                "<span>%D<small>" + (labels.Days || "Dias") + "</small></span> <span>%H<small>" + (labels.Hrs || "Horas") + "</small></span> <span>%M<small>" + (labels.Min || "Min") + "</small></span> <span>%S<small>" + (labels.Sec || "Seg") + "</small></span>"
             )
         );
     });
@@ -321,5 +456,3 @@ $(document).on("submit", ".subscriber-form", function (e) {
 
 
 });
-
-

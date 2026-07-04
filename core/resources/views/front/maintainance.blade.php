@@ -35,15 +35,15 @@
         }
         .maintenance-media {
             background: color-mix(in srgb, var(--primary) 12%, #ffffff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 36px;
+            min-height: 370px;
+            overflow: hidden;
         }
         .maintenance-media img {
-            max-width: 100%;
-            max-height: 360px;
-            object-fit: contain;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
         .maintenance-content {
             padding: 42px;
@@ -106,6 +106,7 @@
         }
         @media (max-width: 767px) {
             .maintenance-shell { grid-template-columns: 1fr; }
+            .maintenance-media { min-height: 260px; }
             .maintenance-content { padding: 28px; }
             h1 { font-size: 26px; }
         }
@@ -130,7 +131,7 @@
             @endif
             @if (request()->cookie('maintenance_device_token'))
                 <div class="maintenance-device">
-                    Codigo deste dispositivo para liberacao:
+                    Código deste dispositivo para liberação:
                     <code>{{ request()->cookie('maintenance_device_token') }}</code>
                 </div>
             @endif

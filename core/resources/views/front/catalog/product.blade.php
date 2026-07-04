@@ -133,13 +133,13 @@
                                 @if ($attribute->options->count() != 0)
                                     <div class="col-sm-6">
                                         <div class="form-group">
-                                            <label for="{{ $attribute->name }}">{{ $attribute->name }}</label>
+                                            <label for="{{ $attribute->name }}">{{ __($attribute->name) }}</label>
                                             <select class="form-control attribute_option" id="{{ $attribute->name }}">
                                                 @foreach ($attribute->options->where('stock', '!=', '0') as $option)
                                                     <option value="{{ $option->name }}" data-type="{{ $attribute->id }}"
                                                         data-href="{{ $option->id }}"
                                                         data-target="{{ PriceHelper::setConvertPrice($option->price) }}">
-                                                        {{ $option->name }}</option>
+                                                        {{ __($option->name) }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -152,9 +152,10 @@
                                 @if ($item->item_type == 'normal')
                                     <div class="qtySelector product-quantity">
                                         <span class="decreaseQty subclick"><i class="fas fa-minus "></i></span>
-                                        <input type="text" class="qtyValue cart-amount" value="1">
+                                        <input type="number" class="qtyValue cart-amount" value="1" min="1"
+                                            max="{{ $item->stock }}" inputmode="numeric" autocomplete="off">
                                         <span class="increaseQty addclick"><i class="fas fa-plus"></i></span>
-                                        <input type="hidden" value="3333" id="current_stock">
+                                        <input type="hidden" value="{{ $item->stock }}" id="current_stock">
                                     </div>
                                 @endif
                                 <div class="p-action-button">

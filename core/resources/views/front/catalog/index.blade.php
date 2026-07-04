@@ -100,21 +100,30 @@
 
               @if ($setting->is_range_search == 1)
                    <!-- Widget Price Range-->
+              @php
+                $priceRangeMax = max(1, (int) ceil($catalogPriceMax ?? $setting->max_price ?? 1));
+                $selectedMinPrice = request()->filled('minPrice') ? min(max(0, (int) floor((float) request()->input('minPrice'))), $priceRangeMax) : 0;
+                $selectedMaxPrice = request()->filled('maxPrice') ? max($selectedMinPrice, (int) ceil((float) request()->input('maxPrice'))) : $priceRangeMax;
+                $selectedMaxPrice = min(max($selectedMaxPrice, 1), $priceRangeMax);
+              @endphp
               <section class="widget widget-categories card rounded p-4">
                 <h3 class="widget-title">{{ __('Filter by Price') }}</h3>
-                <form class="price-range-slider" method="post" data-start-min="{{request()->input('minPrice') ? request()->input('minPrice') : '0'}}" data-start-max="{{request()->input('maxPrice') ? request()->input('maxPrice') : $setting->max_price}}" data-min="0" data-max="{{$setting->max_price}}" data-step="5">
-                  <div class="ui-range-slider"></div>
+                <form class="price-range-slider" action="{{route('front.catalog')}}" method="GET" data-start-min="{{$selectedMinPrice}}" data-start-max="{{$selectedMaxPrice}}" data-min="0" data-max="{{$priceRangeMax}}" data-step="5">
+                  <div class="ui-range-slider">
+                    <span class="range-fallback-handle range-fallback-handle-min"></span>
+                    <span class="range-fallback-handle range-fallback-handle-max"></span>
+                  </div>
                   <footer class="ui-range-slider-footer">
                     <div class="column">
-                      <button class="btn btn-primary btn-sm" id="price_filter" type="button"><span>{{__('Filter')}}</span></button>
+                      <button class="btn btn-primary btn-sm" id="price_filter" type="submit"><span>{{__('Filter')}}</span></button>
                     </div>
                     <div class="column">
                       <div class="ui-range-values">
-                        <div class="ui-range-value-min">{{PriceHelper::setCurrencySign()}}<span class="min_price"></span>
-                          <input type="hidden">
+                        <div class="ui-range-value-min">{{PriceHelper::setCurrencySign()}}<span class="min_price">{{$selectedMinPrice}}</span>
+                          <input type="hidden" name="minPrice" value="{{$selectedMinPrice}}">
                         </div>-
-                        <div class="ui-range-value-max">{{PriceHelper::setCurrencySign()}}<span class="max_price"></span>
-                          <input type="hidden">
+                        <div class="ui-range-value-max">{{PriceHelper::setCurrencySign()}}<span class="max_price">{{$selectedMaxPrice}}</span>
+                          <input type="hidden" name="maxPrice" value="{{$selectedMaxPrice}}">
                         </div>
                       </div>
                     </div>
@@ -183,4 +192,3 @@
         <button type="submit" id="search_button" class="d-none"></button>
     </form>
 @endsection
-

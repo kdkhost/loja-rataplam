@@ -19,12 +19,14 @@ class Order extends Model
         'transaction_number',
         'order_status',
         'payment_status',
+        'payment_details',
         'shipping_info',
         'billing_info',
         'currency_sign',
         'currency_value',
         'tax',
         'state_price',
+        'gateway_fee',
         'state'
     ];
 

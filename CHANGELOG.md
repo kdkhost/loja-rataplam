@@ -9,6 +9,57 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-04 - Loja publica, checkout brasileiro, Mercado Pago Pix e organizacao operacional
+
+### Adicionado
+- Cadastro administrativo de paises de venda, com ativar/desativar e filtro no checkout e nos enderecos do cliente.
+- Suporte a Pix no Mercado Pago com QR Code, codigo copia e cola, expiracao configuravel e webhook de confirmacao.
+- Configuracao robusta do Mercado Pago no painel para Pix, cartao de credito, parcelas, repasse de taxa, taxa percentual e taxa fixa.
+- Campos `gateway_fee` e `payment_details` nos pedidos para armazenar taxa repassada e dados do Pix/Mercado Pago.
+- Controller para a rota publica `/vendor`, preservando a rota existente e corrigindo a listagem/cache de rotas.
+- Scripts operacionais em `core/scripts/` para importar, organizar e complementar produtos antigos da Rataplam com descricoes, atributos, especificacoes, cores e tamanhos.
+- Menu administrativo "Paises de venda" para gerenciar os paises ativos no checkout.
+
+### Alterado
+- Modal do Mercado Pago foi padronizado para PT-BR, CPF/CNPJ, Pix e cartao de credito.
+- Checkout, cadastro de endereco e validacoes passaram a aceitar apenas paises ativos configurados no painel.
+- Pagina de sucesso do checkout passou a exibir instrucoes de Pix quando o pedido for criado como pendente.
+- Filtro de preco da loja foi ajustado para funcionar com slider e fallback por formulario GET.
+- Cards de produtos, ofertas e campanhas receberam padronizacao visual para altura, imagem, conteudo e responsividade.
+- Menu mobile publico passou a abrir em painel deslizante lateral com animacao.
+- Barra superior mobile foi reduzida para rastreamento, favoritos e entrar.
+- Seletor de moeda passou a ficar oculto quando houver apenas um idioma ativo.
+- Banners publicos passaram a ajustar contraste do texto automaticamente conforme o fundo da imagem.
+- Imagem da pagina de manutencao passou a cobrir toda a area visual configurada.
+- Dias e horarios de atendimento foram formatados no padrao brasileiro.
+- Textos restantes do site publico, blog, contato, checkout, pedidos e includes foram revisados para PT-BR.
+
+### Corrigido
+- Falha do filtro de preco da loja que nao aplicava corretamente os valores minimo e maximo.
+- Erro de PWA quando a extensao GD nao esta disponivel na instalacao PHP.
+- Gatilho de banner/popup de saida que nao funcionava corretamente no sistema.
+- Lista de paises do checkout removendo registros legados "Pais internacional" do fluxo publico.
+- Texto reCAPTCHA restante em ingles no checkout.
+- Modal antigo do Mercado Pago com textos em ingles, DNI e campos de cartao fora do padrao brasileiro.
+- Cartao de debito bloqueado explicitamente no Mercado Pago, tanto no formulario quanto no backend.
+- Rota `/vendor` que quebrava `php artisan route:list` por apontar para controller inexistente.
+- Residuos de configuracao de outro gateway no JSON do Mercado Pago.
+
+### Banco de dados
+- `2026_07_04_000008_add_status_to_countries_table`
+- `2026_07_04_000009_update_mercadopago_pix_settings`
+- `2026_07_04_000010_add_gateway_fee_and_payment_details_to_orders_table`
+- `2026_07_04_000011_clean_mercadopago_payment_settings`
+
+### Validacao
+- `php artisan migrate --force` executado para paises ativos, configuracao Mercado Pago Pix e campos novos de pedido.
+- `php artisan route:list --name=mercadopago` executado com sucesso.
+- `php artisan route:list --name=vendor.profile` executado com sucesso.
+- `php artisan route:cache`, `php artisan view:cache`, `php artisan view:clear` e `php artisan optimize:clear` executados.
+- `php -l` executado nos controllers, requests, models e migrations alterados.
+- Validacao HTTP local em `/vendor` e `/catalog` retornando `200`.
+- Validacao do modal Mercado Pago renderizado sem DNI e sem textos antigos em ingles.
+
 ## 2026-07-03 - Atualizacao geral do painel, PWA, popups, WhatsApp, Correios e operacoes
 
 ### Adicionado

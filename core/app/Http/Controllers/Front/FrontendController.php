@@ -418,7 +418,6 @@ class FrontendController extends Controller
     {
         $language = Language::where('status', 1)
             ->whereType('Website')
-            ->whereIn('language', ['English', 'Português', 'Portugues', 'Portuguese'])
             ->find($id);
 
         if (!$language) {
@@ -427,15 +426,19 @@ class FrontendController extends Controller
         }
 
         Session::put('language', $language->id);
-        $locale = $language ? strtolower(str_replace('-', '_', $language->name ?: pathinfo($language->file, PATHINFO_FILENAME))) : '';
+        $locale = strtolower(str_replace('-', '_', $language->name ?: pathinfo($language->file, PATHINFO_FILENAME)));
+        $languageName = strtolower($language->language);
+        $currencyName = null;
 
-        if ($locale === 'pt' || str_starts_with($locale, 'pt_')) {
-            $currency = Currency::where('name', 'BRL')->first();
-            if ($currency) {
-                Session::put('currency', $currency->id);
-            }
-        } else {
-            Session::forget('currency');
+        if ($locale === 'pt' || str_starts_with($locale, 'pt_') || str_contains($languageName, 'portugu')) {
+            $currencyName = 'BRL';
+        } elseif ($locale === 'en' || str_starts_with($locale, 'en_') || str_contains($languageName, 'english')) {
+            $currencyName = 'USD';
+        }
+
+        if ($currencyName) {
+            $currency = Currency::where('status', 1)->where('name', $currencyName)->first();
+            $currency ? Session::put('currency', $currency->id) : Session::forget('currency');
         }
 
         return back();

@@ -33,7 +33,7 @@
                                     <a class="nav-link" data-toggle="pill" href="#paytm">{{ __('Paytm') }}</a>
                                     <a class="nav-link" data-toggle="pill" href="#razorpay">{{ __('Razorpay') }}</a>
                                     <a class="nav-link" data-toggle="pill" href="#sslcommerz">{{ __('SSL commerz') }}</a>
-                                    <a class="nav-link" data-toggle="pill" href="#mercadopago">{{ __('Mercadopago') }}</a>
+                                    <a class="nav-link" data-toggle="pill" href="#mercadopago">Mercado Pago</a>
                                     <a class="nav-link" data-toggle="pill" href="#authorize">{{ __('Authorize.Net') }}</a>
                                     <a class="nav-link" data-toggle="pill" href="#paystack">{{ __('Paystack') }}</a>
                                     <a class="nav-link" data-toggle="pill" href="#flutterwave">{{ __('Flutterwave') }}</a>
@@ -703,7 +703,7 @@
                                                                                 {{ $mercadopago->status == 1 ? 'checked' : '' }}>
                                                                             <span class="switch-body"></span>
                                                                             <span
-                                                                                class="switch-text">{{ __('Display Mercadopago') }}</span>
+                                                                                class="switch-text">Exibir Mercado Pago</span>
                                                                         </label>
                                                                     </div>
 
@@ -733,50 +733,171 @@
                                                                             </label>
                                                                         </div>
 
+                                                                        @php
+                                                                            $mercadoPagoDefaults = [
+                                                                                'public_key' => '',
+                                                                                'token' => '',
+                                                                                'check_sandbox' => 1,
+                                                                                'pix_enabled' => 1,
+                                                                                'credit_card_enabled' => 1,
+                                                                                'debit_card_enabled' => 0,
+                                                                                'pix_expiration_minutes' => 30,
+                                                                                'fee_pass_to_customer' => 0,
+                                                                                'fee_percent' => 0,
+                                                                                'fee_fixed' => 0,
+                                                                                'max_installments' => 1,
+                                                                            ];
+                                                                            $mercadoPagoConfig = array_merge($mercadoPagoDefaults, $mercadopagoData ?: []);
+                                                                        @endphp
+
                                                                         <div class="form-group">
-                                                                            <label for="name">{{ __('Enter Name') }}
-                                                                                *</label>
+                                                                            <label for="mercadopago_name">Nome exibido no checkout *</label>
                                                                             <input type="text" class="form-control"
-                                                                                name="name" id="name"
-                                                                                value="{{ $mercadopago->name }}">
+                                                                                name="name" id="mercadopago_name"
+                                                                                value="{{ $mercadopago->name ?: 'Mercado Pago' }}">
                                                                         </div>
 
-                                                                        @foreach ($mercadopagoData as $pkey => $mercadopagoData)
-                                                                            @if ($pkey == 'check_sandbox')
-                                                                                <div class="form-group  col-xl-4 col-md-6">
-                                                                                    <div
-                                                                                        class="custom-control custom-checkbox">
-                                                                                        <input type="checkbox"
-                                                                                            name="pkey[{{ __($pkey) }}]"
-                                                                                            class="custom-control-input"
-                                                                                            {{ $mercadopagoData == 1 ? 'checked' : '' }}
-                                                                                            id="authorize{{ $pkey }}">
-                                                                                        <label class="custom-control-label"
-                                                                                            for="authorize{{ $pkey }}">
-                                                                                            {{ __($mercadopago->name . ' ' . ucwords(str_replace('_', ' ', $pkey))) }}
-                                                                                        </label>
-                                                                                    </div>
+                                                                        <div class="form-group col-xl-12">
+                                                                            <label for="mercadopago_public_key">Chave pública *</label>
+                                                                            <input type="text" class="form-control"
+                                                                                id="mercadopago_public_key"
+                                                                                name="pkey[public_key]"
+                                                                                placeholder="APP_USR ou TEST-..."
+                                                                                value="{{ $mercadoPagoConfig['public_key'] }}"
+                                                                                required>
+                                                                        </div>
+
+                                                                        <div class="form-group col-xl-12">
+                                                                            <label for="mercadopago_token">Access token *</label>
+                                                                            <input type="text" class="form-control"
+                                                                                id="mercadopago_token"
+                                                                                name="pkey[token]"
+                                                                                placeholder="APP_USR ou TEST-..."
+                                                                                value="{{ $mercadoPagoConfig['token'] }}"
+                                                                                required>
+                                                                        </div>
+
+                                                                        <div class="row">
+                                                                            <div class="form-group col-xl-6 col-md-6">
+                                                                                <div class="custom-control custom-checkbox">
+                                                                                    <input type="checkbox"
+                                                                                        name="pkey[check_sandbox]"
+                                                                                        class="custom-control-input"
+                                                                                        {{ $mercadoPagoConfig['check_sandbox'] == 1 ? 'checked' : '' }}
+                                                                                        id="mercadopago_check_sandbox">
+                                                                                    <label class="custom-control-label"
+                                                                                        for="mercadopago_check_sandbox">
+                                                                                        Usar ambiente de teste
+                                                                                    </label>
                                                                                 </div>
-                                                                            @else
-                                                                                <div class="form-group col-xl-12">
-                                                                                    <label
-                                                                                        for="inp-{{ __($pkey) }}">{{ __($mercadopago->name . ' ' . ucwords(str_replace('_', ' ', $pkey))) }}</label>
-                                                                                    <input type="text"
+                                                                            </div>
+
+                                                                            <div class="form-group col-xl-6 col-md-6">
+                                                                                <div class="custom-control custom-checkbox">
+                                                                                    <input type="checkbox"
+                                                                                        name="pkey[pix_enabled]"
+                                                                                        class="custom-control-input"
+                                                                                        {{ $mercadoPagoConfig['pix_enabled'] == 1 ? 'checked' : '' }}
+                                                                                        id="mercadopago_pix_enabled">
+                                                                                    <label class="custom-control-label"
+                                                                                        for="mercadopago_pix_enabled">
+                                                                                        Aceitar Pix
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="form-group col-xl-6 col-md-6">
+                                                                                <div class="custom-control custom-checkbox">
+                                                                                    <input type="checkbox"
+                                                                                        name="pkey[credit_card_enabled]"
+                                                                                        class="custom-control-input"
+                                                                                        {{ $mercadoPagoConfig['credit_card_enabled'] == 1 ? 'checked' : '' }}
+                                                                                        id="mercadopago_credit_card_enabled">
+                                                                                    <label class="custom-control-label"
+                                                                                        for="mercadopago_credit_card_enabled">
+                                                                                        Aceitar cartão de crédito
+                                                                                    </label>
+                                                                                </div>
+                                                                            </div>
+
+                                                                            <div class="form-group col-xl-6 col-md-6">
+                                                                                <div class="custom-control custom-checkbox">
+                                                                                    <input type="checkbox"
+                                                                                        class="custom-control-input"
+                                                                                        id="mercadopago_debit_card_enabled"
+                                                                                        disabled>
+                                                                                    <label class="custom-control-label"
+                                                                                        for="mercadopago_debit_card_enabled">
+                                                                                        Cartão de débito bloqueado
+                                                                                    </label>
+                                                                                </div>
+                                                                                <input type="hidden" name="pkey[debit_card_enabled]" value="0">
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="row">
+                                                                            <div class="form-group col-xl-6">
+                                                                                <label for="mercadopago_pix_expiration_minutes">Expiração do Pix em minutos</label>
+                                                                                <input type="number" min="5" max="4320"
+                                                                                    class="form-control"
+                                                                                    id="mercadopago_pix_expiration_minutes"
+                                                                                    name="pkey[pix_expiration_minutes]"
+                                                                                    value="{{ $mercadoPagoConfig['pix_expiration_minutes'] }}">
+                                                                            </div>
+
+                                                                            <div class="form-group col-xl-6">
+                                                                                <label for="mercadopago_max_installments">Parcelas máximas no crédito</label>
+                                                                                <select class="form-control"
+                                                                                    id="mercadopago_max_installments"
+                                                                                    name="pkey[max_installments]">
+                                                                                    @for ($installment = 1; $installment <= 12; $installment++)
+                                                                                        <option value="{{ $installment }}"
+                                                                                            {{ (int) $mercadoPagoConfig['max_installments'] === $installment ? 'selected' : '' }}>
+                                                                                            {{ $installment }}x
+                                                                                        </option>
+                                                                                    @endfor
+                                                                                </select>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div class="border rounded p-3 mb-3">
+                                                                            <div class="custom-control custom-checkbox mb-3">
+                                                                                <input type="checkbox"
+                                                                                    name="pkey[fee_pass_to_customer]"
+                                                                                    class="custom-control-input"
+                                                                                    {{ $mercadoPagoConfig['fee_pass_to_customer'] == 1 ? 'checked' : '' }}
+                                                                                    id="mercadopago_fee_pass_to_customer">
+                                                                                <label class="custom-control-label"
+                                                                                    for="mercadopago_fee_pass_to_customer">
+                                                                                    Repassar taxa do Mercado Pago ao cliente
+                                                                                </label>
+                                                                            </div>
+
+                                                                            <div class="row">
+                                                                                <div class="form-group col-xl-6 mb-xl-0">
+                                                                                    <label for="mercadopago_fee_percent">Taxa percentual (%)</label>
+                                                                                    <input type="text" inputmode="decimal"
                                                                                         class="form-control"
-                                                                                        id="inp-{{ __($pkey) }}"
-                                                                                        name="pkey[{{ __($pkey) }}]"
-                                                                                        placeholder="{{ __($mercadopago->name . ' ' . ucwords(str_replace('_', ' ', $pkey))) }}"
-                                                                                        value="{{ $mercadopagoData }}"
-                                                                                        required>
+                                                                                        id="mercadopago_fee_percent"
+                                                                                        name="pkey[fee_percent]"
+                                                                                        value="{{ str_replace('.', ',', $mercadoPagoConfig['fee_percent']) }}">
                                                                                 </div>
-                                                                            @endif
-                                                                        @endforeach
+
+                                                                                <div class="form-group col-xl-6 mb-0">
+                                                                                    <label for="mercadopago_fee_fixed">Taxa fixa em reais (R$)</label>
+                                                                                    <input type="text" inputmode="decimal"
+                                                                                        class="form-control"
+                                                                                        id="mercadopago_fee_fixed"
+                                                                                        name="pkey[fee_fixed]"
+                                                                                        value="{{ str_replace('.', ',', $mercadoPagoConfig['fee_fixed']) }}">
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
 
                                                                         <div class="form-group">
-                                                                            <label for="text">{{ __('Enter Text') }}
-                                                                                *</label>
+                                                                            <label for="text">Texto exibido no checkout *</label>
                                                                             <textarea name="text" id="text" class="form-control " rows="5"
-                                                                                placeholder="{{ __('Enter Text') }}">{{ $mercadopago->text }}</textarea>
+                                                                                placeholder="Informe a mensagem exibida ao cliente no checkout">{{ $mercadopago->text }}</textarea>
                                                                         </div>
 
                                                                         <input type="hidden" name="unique_keyword"
@@ -789,7 +910,7 @@
                                                                         <div
                                                                             class="form-group d-flex justify-content-center">
                                                                             <button type="submit"
-                                                                                class="btn btn-secondary btn-block w-50">{{ __('Submit') }}</button>
+                                                                                class="btn btn-secondary btn-block w-50">Salvar Mercado Pago</button>
                                                                         </div>
 
                                                                     </div>

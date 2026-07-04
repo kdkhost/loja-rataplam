@@ -54,6 +54,9 @@ class CatalogController extends Controller
             $option_wise_item_ids[] = $attr_item_id->item_id;
         }
         $setting = Setting::first();
+        $configuredMaxPrice = (float) ($setting->max_price ?? 0);
+        $highestProductPrice = (float) Item::where('status', 1)->max('discount_price');
+        $catalogPriceMax = (int) ceil(PriceHelper::setPrice(max($configuredMaxPrice, $highestProductPrice, 1)));
 
         $sorting = $request->has('sorting') ?  ( !empty($request->sorting) ? $request->sorting : null ) : null;
         $new = $request->has('new') ?  ( !empty($request->new) ? 1 : null ) : null;
@@ -181,6 +184,7 @@ class CatalogController extends Controller
             'brand' => $brand,
             'brand' => $brand,
             'items' => $items,
+            'catalogPriceMax' => $catalogPriceMax,
             'name_string_count' => $name_string_count,
             'category' => $category,
             'subcategory' => $subcategory,

@@ -1,1 +1,2 @@
 core/vendor/
+core/database/sql/*.sql

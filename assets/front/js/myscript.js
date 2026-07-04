@@ -14,10 +14,275 @@ $(function ($) {
         });
     }
 
+    function applyBannerTextContrast() {
+        var targets = document.querySelectorAll('.hero-slider .item, .sright-image, .genius-banner');
+
+        function imageSource(target) {
+            var img = target.querySelector('img');
+            if (img) {
+                return img.currentSrc || img.getAttribute('src') || img.getAttribute('data-src');
+            }
+
+            var background = window.getComputedStyle(target).backgroundImage || '';
+            var match = background.match(/url\(["']?(.*?)["']?\)/);
+            return match ? match[1] : '';
+        }
+
+        function textArea(target) {
+            return target.querySelector('.inner-content') || target.querySelector('.item-inner') || target.querySelector('.from-bottom') || target;
+        }
+
+        function drawCover(context, img, width, height) {
+            var imageWidth = img.naturalWidth || img.width;
+            var imageHeight = img.naturalHeight || img.height;
+            var scale = Math.max(width / imageWidth, height / imageHeight);
+            var drawWidth = imageWidth * scale;
+            var drawHeight = imageHeight * scale;
+            var dx = (width - drawWidth) / 2;
+            var dy = (height - drawHeight) / 2;
+            context.drawImage(img, dx, dy, drawWidth, drawHeight);
+        }
+
+        function sampleBounds(target, canvasWidth, canvasHeight) {
+            if (target.matches('.hero-slider .item')) {
+                return { left: 0, top: 0, width: Math.ceil(canvasWidth * 0.48), height: canvasHeight };
+            }
+
+            var targetRect = target.getBoundingClientRect();
+            var textRect = textArea(target).getBoundingClientRect();
+            var scaleX = canvasWidth / Math.max(1, targetRect.width);
+            var scaleY = canvasHeight / Math.max(1, targetRect.height);
+            var paddingX = Math.max(12, textRect.width * 0.18);
+            var paddingY = Math.max(12, textRect.height * 0.18);
+
+            var left = Math.max(0, Math.floor((textRect.left - targetRect.left - paddingX) * scaleX));
+            var top = Math.max(0, Math.floor((textRect.top - targetRect.top - paddingY) * scaleY));
+            var right = Math.min(canvasWidth, Math.ceil((textRect.right - targetRect.left + paddingX) * scaleX));
+            var bottom = Math.min(canvasHeight, Math.ceil((textRect.bottom - targetRect.top + paddingY) * scaleY));
+
+            if (right <= left || bottom <= top) {
+                return { left: 0, top: 0, width: Math.ceil(canvasWidth * 0.45), height: canvasHeight };
+            }
+
+            return { left: left, top: top, width: right - left, height: bottom - top };
+        }
+
+        function setFallback(target) {
+            target.classList.remove('banner-text-dark');
+            target.classList.toggle('banner-text-dark', target.matches('.hero-slider .item'));
+            target.classList.toggle('banner-text-light', !target.matches('.hero-slider .item'));
+        }
+
+        function calculate(target, src) {
+            if (!src) {
+                setFallback(target);
+                return;
+            }
+
+            var img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+                try {
+                    var canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d', { willReadFrequently: true });
+                    var rect = target.getBoundingClientRect();
+                    var isHero = target.matches('.hero-slider .item');
+                    var width = 96;
+                    var imageWidth = img.naturalWidth || img.width;
+                    var imageHeight = img.naturalHeight || img.height;
+                    var height = isHero
+                        ? Math.max(1, Math.round(imageHeight / Math.max(1, imageWidth) * width))
+                        : Math.max(1, Math.round(rect.height / Math.max(1, rect.width) * width));
+                    canvas.width = width;
+                    canvas.height = height;
+                    context.fillStyle = '#ffffff';
+                    context.fillRect(0, 0, width, height);
+                    if (isHero) {
+                        context.drawImage(img, 0, 0, width, height);
+                    } else {
+                        drawCover(context, img, width, height);
+                    }
+
+                    var bounds = sampleBounds(target, width, height);
+                    var data = context.getImageData(bounds.left, bounds.top, bounds.width, bounds.height).data;
+                    var total = 0;
+                    var count = 0;
+                    var brightCount = 0;
+                    var darkCount = 0;
+                    for (var i = 0; i < data.length; i += 16) {
+                        var alpha = data[i + 3];
+                        if (alpha < 20) continue;
+                        var luminance = (0.299 * data[i]) + (0.587 * data[i + 1]) + (0.114 * data[i + 2]);
+                        total += luminance;
+                        if (luminance >= 170) brightCount++;
+                        if (luminance <= 95) darkCount++;
+                        count++;
+                    }
+
+                    var brightness = count ? total / count : 0;
+                    var brightRatio = count ? brightCount / count : 0;
+                    var darkRatio = count ? darkCount / count : 0;
+                    var useDarkText = isHero
+                        ? (brightness >= 105 || brightRatio >= 0.18 || darkRatio < 0.55)
+                        : (darkRatio <= 0.65 && (brightness >= 110 || brightRatio >= 0.25));
+                    target.classList.toggle('banner-text-dark', useDarkText);
+                    target.classList.toggle('banner-text-light', !useDarkText);
+                } catch (e) {
+                    setFallback(target);
+                }
+            };
+            img.onerror = function () {
+                setFallback(target);
+            };
+            img.src = src;
+        }
+
+        targets.forEach(function (target) {
+            calculate(target, imageSource(target));
+        });
+    }
+
+    function setupMobileMenuDrawer() {
+        var menu = document.querySelector('.mobile-menu');
+        var backdrop = document.querySelector('.mobile-menu-backdrop');
+        var toggles = document.querySelectorAll('.mobile-menu-toggle');
+
+        if (!menu || !backdrop) return;
+
+        function setToggleState(isOpen) {
+            toggles.forEach(function (toggle) {
+                toggle.classList.toggle('active', isOpen);
+                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+        }
+
+        function openMenu() {
+            menu.classList.add('open');
+            backdrop.classList.add('open');
+            document.body.classList.add('mobile-menu-open');
+            menu.setAttribute('aria-hidden', 'false');
+            setToggleState(true);
+        }
+
+        function closeMenu() {
+            menu.classList.remove('open');
+            backdrop.classList.remove('open');
+            document.body.classList.remove('mobile-menu-open');
+            menu.setAttribute('aria-hidden', 'true');
+            setToggleState(false);
+        }
+
+        document.addEventListener('click', function (event) {
+            var toggle = event.target.closest('.mobile-menu-toggle');
+            var closeTarget = event.target.closest('[data-mobile-menu-close]');
+            var menuLink = event.target.closest('.mobile-menu a[href]:not([href="#"])');
+
+            if (toggle) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                menu.classList.contains('open') ? closeMenu() : openMenu();
+                return;
+            }
+
+            if (closeTarget || menuLink) {
+                closeMenu();
+            }
+        }, true);
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') {
+                closeMenu();
+            }
+        });
+    }
+
+    function priceRangeNumber(value, fallback) {
+        var parsed = parseFloat(String(value || '').replace(',', '.'));
+        return isFinite(parsed) ? parsed : fallback;
+    }
+
+    function initPriceRangeSliders() {
+        var forms = document.querySelectorAll('.price-range-slider');
+
+        forms.forEach(function (form) {
+            var slider = form.querySelector('.ui-range-slider');
+            var minLabel = form.querySelector('.ui-range-value-min span');
+            var maxLabel = form.querySelector('.ui-range-value-max span');
+            var minInput = form.querySelector('.ui-range-value-min input');
+            var maxInput = form.querySelector('.ui-range-value-max input');
+
+            if (!slider || !minLabel || !maxLabel) return;
+
+            var step = Math.max(1, Math.round(priceRangeNumber(form.getAttribute('data-step'), 1)));
+            var min = Math.floor(priceRangeNumber(form.getAttribute('data-min'), 0));
+            var max = Math.ceil(priceRangeNumber(form.getAttribute('data-max'), min + step));
+
+            if (max <= min) {
+                max = min + step;
+                form.setAttribute('data-max', max);
+            }
+
+            var startMin = Math.floor(priceRangeNumber(form.getAttribute('data-start-min'), min));
+            var startMax = Math.ceil(priceRangeNumber(form.getAttribute('data-start-max'), max));
+
+            startMin = Math.max(min, Math.min(startMin, max));
+            startMax = Math.max(startMin, Math.min(startMax, max));
+
+            function setValues(values) {
+                var currentMin = Math.round(priceRangeNumber(values[0], startMin));
+                var currentMax = Math.round(priceRangeNumber(values[1], startMax));
+
+                currentMin = Math.max(min, Math.min(currentMin, max));
+                currentMax = Math.max(currentMin, Math.min(currentMax, max));
+
+                minLabel.innerHTML = currentMin;
+                maxLabel.innerHTML = currentMax;
+
+                if (minInput) minInput.value = currentMin;
+                if (maxInput) maxInput.value = currentMax;
+            }
+
+            if (!window.noUiSlider) {
+                setValues([startMin, startMax]);
+                return;
+            }
+
+            if (!slider.noUiSlider) {
+                try {
+                    window.noUiSlider.create(slider, {
+                        start: [startMin, startMax],
+                        connect: true,
+                        step: step,
+                        range: {
+                            min: min,
+                            max: max
+                        }
+                    });
+                } catch (error) {
+                    setValues([startMin, startMax]);
+                    return;
+                }
+            }
+
+            if (!slider.getAttribute('data-catalog-price-ready')) {
+                slider.noUiSlider.on('update', function (values) {
+                    setValues(values);
+                });
+                slider.setAttribute('data-catalog-price-ready', '1');
+            }
+
+            setValues(slider.noUiSlider.get ? slider.noUiSlider.get() : [startMin, startMax]);
+        });
+    }
+
 
     $(document).ready(function () {
 
         lazy();
+        setupMobileMenuDrawer();
+        initPriceRangeSliders();
+        applyBannerTextContrast();
+        setTimeout(applyBannerTextContrast, 1200);
 
 
         function number_format(number, decimals = 2, dec_point, thousands_sep) {
@@ -91,6 +356,10 @@ $(function ($) {
             items: 1,
             thumbs: false,
         });
+        $hero_slider_main.on('initialized.owl.carousel translated.owl.carousel refreshed.owl.carousel', function () {
+            applyBannerTextContrast();
+        });
+        setTimeout(applyBannerTextContrast, 300);
 
         // heroarea-slider
         var $testimonialSlider = $('.heroarea-slider');
@@ -614,13 +883,32 @@ $(function ($) {
         })
 
 
+        function normalizeProductQuantity(input) {
+            let current_stock = parseInt($('#current_stock').val(), 10);
+            let quantity = parseInt(String(input.val()).replace(/\D/g, ''), 10);
+
+            if (isNaN(current_stock) || current_stock < 1) {
+                current_stock = 1;
+            }
+            if (isNaN(quantity) || quantity < 1) {
+                quantity = 1;
+            }
+            if (quantity > current_stock) {
+                quantity = current_stock;
+            }
+
+            input.val(quantity);
+            return quantity;
+        }
+
         // product quintity select js Start
         $(document).on('click', '.subclick', function () {
-            let current_qty = parseInt($('.cart-amount').val());
+            let input = $(this).closest('.product-quantity').find('.cart-amount');
+            let current_qty = normalizeProductQuantity(input);
             if (current_qty > 1) {
-                $('.cart-amount').val(current_qty - 1);
+                input.val(current_qty - 1);
             } else {
-                error('Minumum Quantity Must Be 1');
+                error('A quantidade mínima deve ser 1');
             }
 
         })
@@ -629,30 +917,29 @@ $(function ($) {
 
 
         $(document).on('click', '.addclick', function () {
-            let current_stock = parseInt($('#current_stock').val());
-            let current_qty = parseInt($('.cart-amount').val());
+            let input = $(this).closest('.product-quantity').find('.cart-amount');
+            let current_stock = parseInt($('#current_stock').val(), 10);
+            let current_qty = normalizeProductQuantity(input);
+            if (isNaN(current_stock) || current_stock < 1) {
+                current_stock = 1;
+            }
             if (current_qty < current_stock) {
-                $('.cart-amount').val(current_qty + 1);
+                input.val(current_qty + 1);
             } else {
-                error('Product Quantity Maximum ' + current_stock);
+                error('Quantidade máxima do produto: ' + current_stock);
             }
         })
 
 
-        $(document).on('keyup', '.cart-amount', function () {
-            let current_stock = parseInt($('#current_stock').val());
-            let key_val = parseInt($(this).val());
+        $(document).on('input keyup', '.cart-amount', function () {
+            let current_stock = parseInt($('#current_stock').val(), 10);
+            let key_val = normalizeProductQuantity($(this));
 
             if (key_val > current_stock) {
-                error('Product Maximum Quantity ' + current_stock);
-                $('.cart-amount').val(current_stock);
+                error('Quantidade máxima do produto: ' + current_stock);
             }
             if (key_val <= 0) {
-                $('.cart-amount').val(1);
-                error('Product Minimum Quantity' + 1);
-            }
-            if (key_val > 0 && key_val < current_stock) {
-                $('.cart-amount').val(key_val);
+                error('Quantidade mínima do produto: 1');
             }
 
         })
@@ -686,9 +973,21 @@ $(function ($) {
             $("#search_button").click();
         });
 
-        $(document).on("click", "#price_filter", function () {
-            let min_price = parseInt($(".min_price").html());
-            let max_price = parseInt($(".max_price").html());
+        $(document).on("click", "#price_filter", function (event) {
+            event.preventDefault();
+            initPriceRangeSliders();
+            let priceRange = $(this).closest(".price-range-slider");
+            let min_price = parseInt(priceRange.find(".ui-range-value-min input").val() || priceRange.find(".min_price").text(), 10);
+            let max_price = parseInt(priceRange.find(".ui-range-value-max input").val() || priceRange.find(".max_price").text(), 10);
+
+            if (isNaN(min_price)) {
+                min_price = parseInt(priceRange.attr("data-min"), 10) || 0;
+            }
+
+            if (isNaN(max_price) || max_price < min_price) {
+                max_price = parseInt(priceRange.attr("data-max"), 10) || min_price;
+            }
+
             $("#search_form #minPrice").val(min_price);
             $("#search_form #maxPrice").val(max_price);
             removePage();
@@ -1085,8 +1384,13 @@ $(function ($) {
         }
 
         function getQuantity() {
-            let quantity = $(".qtyValue").val();
-            return parseInt(quantity);
+            let quantityInput = $(".product-quantity .qtyValue").first();
+
+            if (!quantityInput.length) {
+                quantityInput = $(".qtyValue").first();
+            }
+
+            return normalizeProductQuantity(quantityInput);
         }
 
         function optionPriceSum(options_prices) {
@@ -1203,5 +1507,3 @@ $(window).on('load', function (event) {
     }
 
 });
-
-

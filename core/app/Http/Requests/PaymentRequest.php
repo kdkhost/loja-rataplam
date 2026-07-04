@@ -7,6 +7,7 @@ use App\Models\ShippingService;
 use App\Models\State;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class PaymentRequest extends FormRequest
 {
@@ -47,6 +48,10 @@ class PaymentRequest extends FormRequest
                 'bill_address1' => 'required',
                 'bill_city' => 'required',
                 'bill_zip' => 'required',
+                'bill_country' => [
+                    'required',
+                    Rule::exists('countries', 'name')->where(fn ($query) => $query->where('status', 1)),
+                ],
             ];
         }else{
             return [
@@ -66,6 +71,8 @@ class PaymentRequest extends FormRequest
         return [
             'state_id.required'   => __('Please select your shipping state.'),
             'shipping_id.required'   => __('Please select your shipping method.'),
+            'bill_country.required' => 'Selecione um país liberado para venda.',
+            'bill_country.exists' => 'Este país não está liberado para venda.',
         ];
     }
 

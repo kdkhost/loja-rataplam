@@ -102,22 +102,34 @@ class PaymentSettingRepository
 
            
 
-            if (array_key_exists("check_sandbox",$info_data)){
-                $info_data['check_sandbox'] = 1;
-            }else{
-                if (strpos($pay_data->information, 'check_sandbox') !== false) {
-                    $info_data['check_sandbox'] = 0;
+            $checkboxFields = ['check_sandbox'];
+
+            if ($pay_data->unique_keyword == 'paytm') {
+                $checkboxFields[] = 'paytm_mode';
+            }
+
+            if ($pay_data->unique_keyword == 'mercadopago') {
+                $checkboxFields = array_merge($checkboxFields, [
+                    'pix_enabled',
+                    'credit_card_enabled',
+                    'fee_pass_to_customer',
+                ]);
+            }
+
+            foreach ($checkboxFields as $checkboxField) {
+                if (array_key_exists($checkboxField, $info_data)) {
+                    $info_data[$checkboxField] = 1;
+                } elseif (strpos((string) $pay_data->information, $checkboxField) !== false || in_array($checkboxField, ['pix_enabled', 'credit_card_enabled', 'fee_pass_to_customer'], true)) {
+                    $info_data[$checkboxField] = 0;
                 }
             }
 
-   
-
-            if (array_key_exists("paytm_mode",$info_data)){
-                $info_data['paytm_mode'] = 1;
-            }else{
-                if (strpos($pay_data->information, 'paytm_mode') !== false) {
-                    $info_data['paytm_mode'] = 0;
-                }
+            if ($pay_data->unique_keyword == 'mercadopago') {
+                $info_data['debit_card_enabled'] = 0;
+                $info_data['pix_expiration_minutes'] = max(5, min(4320, (int) ($info_data['pix_expiration_minutes'] ?? 30)));
+                $info_data['fee_percent'] = max(0, min(100, (float) str_replace(',', '.', $info_data['fee_percent'] ?? 0)));
+                $info_data['fee_fixed'] = max(0, (float) str_replace(',', '.', $info_data['fee_fixed'] ?? 0));
+                $info_data['max_installments'] = max(1, min(12, (int) ($info_data['max_installments'] ?? 1)));
             }
 
             

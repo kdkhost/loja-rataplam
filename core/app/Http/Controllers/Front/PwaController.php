@@ -17,8 +17,8 @@ class PwaController extends Controller
         $icon = $setting->pwa_icon ?: $setting->favicon;
         $icon192 = $setting->pwa_icon_192 ?: $icon;
         $icon512 = $setting->pwa_icon_512 ?: $icon;
-        $iconType192 = pathinfo($icon192, PATHINFO_EXTENSION) === 'svg' ? 'image/svg+xml' : 'image/png';
-        $iconType512 = pathinfo($icon512, PATHINFO_EXTENSION) === 'svg' ? 'image/svg+xml' : 'image/png';
+        $iconType192 = $this->iconMimeType($icon192);
+        $iconType512 = $this->iconMimeType($icon512);
 
         return response()->json([
             'name' => $setting->pwa_name ?: $setting->title,
@@ -43,6 +43,16 @@ class PwaController extends Controller
                 ],
             ],
         ], 200, ['Content-Type' => 'application/manifest+json']);
+    }
+
+    private function iconMimeType(?string $icon): string
+    {
+        return match (strtolower(pathinfo((string) $icon, PATHINFO_EXTENSION))) {
+            'svg' => 'image/svg+xml',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
     }
 
     public function serviceWorker()

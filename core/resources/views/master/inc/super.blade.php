@@ -57,6 +57,7 @@
                 <li><a class="sub-link" href="{{ route('back.code.index') }}"><span class="sub-item">{{ __('Set Coupons') }}</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.shipping.index') }}"><span class="sub-item">{{ __('Shipping') }}</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.platform.correios') }}"><span class="sub-item">{{ __('Correios Brasil') }}</span></a></li>
+                <li><a class="sub-link" href="{{ route('back.country.index') }}"><span class="sub-item">Países de venda</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.state.index') }}"><span class="sub-item">{{ __('State Charge') }}</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.tax.index') }}"><span class="sub-item">{{ __('Tax') }}</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.currency.index') }}"><span class="sub-item">{{ __('Currency') }}</span></a></li>

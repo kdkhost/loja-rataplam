@@ -61,11 +61,8 @@ class ImageHelper
             self::mirrorUploadedFile($file, $path, $photoName);
 
 
-            $image = \Image::make($file)->resize(230, 230);
-
-
             $thumbnailPath = $path . '/' . $thumbnailName;
-            $thumbnailContents = (string) $image->encode();
+            $thumbnailContents = self::thumbnailContents($file);
             Storage::put($thumbnailPath, $thumbnailContents);
             self::mirrorContents($thumbnailContents, $path, $thumbnailName);
 
@@ -98,12 +95,8 @@ class ImageHelper
         $photoName = 'OM_' . time() .  Str::random(8) . '.' . $file->getClientOriginalExtension();
         $thumbnailName = 'OM_' . time() . Str::random(8) . '.' . $file->getClientOriginalExtension();
 
-
-        $image = \Image::make($file)->resize(230, 230);
-
-
         $thumbnailPath = $path . '/' . $thumbnailName;
-        $thumbnailContents = (string) $image->encode();
+        $thumbnailContents = self::thumbnailContents($file);
         Storage::put($thumbnailPath, $thumbnailContents);
         self::mirrorContents($thumbnailContents, $path, $thumbnailName);
 
@@ -143,6 +136,15 @@ class ImageHelper
         $destination = self::publicMirrorPath($path, $name);
         File::ensureDirectoryExists(dirname($destination));
         File::copy($file->getRealPath(), $destination);
+    }
+
+    public static function thumbnailContents($file)
+    {
+        try {
+            return (string) \Image::make($file)->resize(230, 230)->encode();
+        } catch (\Throwable $exception) {
+            return file_get_contents($file->getRealPath());
+        }
     }
 
     private static function mirrorContents($contents, $path, $name)

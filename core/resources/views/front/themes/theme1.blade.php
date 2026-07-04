@@ -753,7 +753,7 @@
 
                                                 <li><i class="icon-user"></i>{{ __('Admin') }}</li>
                                                 <li><i
-                                                        class="icon-clock"></i>{{ date('jS F, Y', strtotime($post->created_at)) }}
+                                                        class="icon-clock"></i>{{ date('d/m/Y', strtotime($post->created_at)) }}
                                                 </li>
                                             </ul>
                                             <p>{{ Str::limit(strip_tags($post->details), 120) }}

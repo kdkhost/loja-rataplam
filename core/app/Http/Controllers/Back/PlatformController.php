@@ -12,6 +12,7 @@ use App\Models\Setting;
 use App\Services\CorreiosService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -96,7 +97,13 @@ class PlatformController extends Controller
 
     private function generatePwaIcons(?string $sourceIcon): array
     {
-        if (!$sourceIcon || pathinfo($sourceIcon, PATHINFO_EXTENSION) === 'svg') {
+        $sourceExtension = strtolower(pathinfo((string) $sourceIcon, PATHINFO_EXTENSION));
+
+        if (!$sourceIcon || $sourceExtension === 'svg') {
+            return [];
+        }
+
+        if (!in_array($sourceExtension, ['jpeg', 'jpg', 'png', 'webp'], true)) {
             return [];
         }
 
@@ -111,18 +118,13 @@ class PlatformController extends Controller
 
         $icons = [];
         foreach ([192, 512] as $size) {
-            $filename = 'pwa-' . $size . '-' . time() . Str::random(6) . '.png';
+            $filename = 'pwa-' . $size . '-' . time() . Str::random(6) . '.' . $sourceExtension;
             $storagePath = storage_path('app/public/images/' . $filename);
             $publicPath = public_path('storage/images/' . $filename);
 
-            if (!is_dir(dirname($storagePath))) {
-                mkdir(dirname($storagePath), 0755, true);
-            }
-            if (!is_dir(dirname($publicPath))) {
-                mkdir(dirname($publicPath), 0755, true);
-            }
-
-            \Image::make($sourcePath)->fit($size, $size)->encode('png')->save($storagePath);
+            File::ensureDirectoryExists(dirname($storagePath));
+            File::ensureDirectoryExists(dirname($publicPath));
+            copy($sourcePath, $storagePath);
             copy($storagePath, $publicPath);
 
             $icons['pwa_icon_' . $size] = $filename;

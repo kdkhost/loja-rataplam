@@ -342,12 +342,14 @@
      </div>
 
 
+     @include('includes.mercadopago_modal')
+
      @php
          $paymentData = App\Models\PaymentSetting::where('unique_keyword', 'mercadopago')->first();
          $paydata = $paymentData->convertJsonData();
      @endphp
 
-     @if ($paymentData->status == 1)
+     @if (false && $paymentData->status == 1)
          {{-- MERCADOPAGO --}}
          <div class="modal fade" id="mercadopago" tabindex="-1" aria-hidden="true">
              <form class="interactive-credit-card row" id="mercadopagofrom"
@@ -356,7 +358,7 @@
                  <div class="modal-dialog">
                      <div class="modal-content">
                          <div class="modal-header">
-                             <h6 class="modal-title">{{ __('Transactions via Mercadapago') }}</h6>
+                             <h6 class="modal-title">Transações via Mercado Pago</h6>
                              <button class="close" type="button" data-bs-dismiss="modal" aria-label="Close"><span
                                      aria-hidden="true">&times;</span></button>
                          </div>
@@ -375,17 +377,17 @@
 
                                  <div class="col-lg-12 form-group">
                                      <input class="form-control" type="text" id="cardholderName"
-                                         data-checkout="cardholderName" placeholder="{{ __('Card Holder Name') }}"
+                                         data-checkout="cardholderName" placeholder="Nome impresso no cartão"
                                          required />
                                  </div>
                                  <div class="col-lg-12 form-group">
                                      <input class="form-control" type="text" id="docNumber"
-                                         data-checkout="docNumber" placeholder="{{ __('Document Number') }}"
+                                         data-checkout="docNumber" placeholder="Número do documento"
                                          required />
                                  </div>
                                  <div class="col-lg-12 form-group">
                                      <label for="docType" class="col-lg-3 pl-0"
-                                         id="dc-label">{{ __('Document type') }}</label>
+                                         id="dc-label">Tipo de documento</label>
                                      <select id="docType" class="form-control" name="docType"
                                          data-checkout="docType"></select>
                                  </div>
@@ -393,7 +395,7 @@
                                  <p>{{ PriceHelper::GatewayText('mercadopago') }}</p>
                              </div>
                          </div>
-                         <input type="hidden" name="payment_method" value="Mercadopago">
+                         <input type="hidden" name="payment_method" value="Mercado Pago">
                          <input type="hidden" name="shipping_id" value="" class="shipping_id_setup">
                          <input type="hidden" name="state_id"
                              value="{{ auth()->check() && auth()->user()->state_id ? auth()->user()->state_id : '' }}"
@@ -402,7 +404,7 @@
                              <button class="btn btn-primary btn-sm" type="button"
                                  data-bs-dismiss="modal"><span>{{ __('Cancel') }}</span></button>
                              <button class="btn btn-primary btn-sm"
-                                 type="submit"><span>{{ __('Checkout With Mercadopago') }}</span></button>
+                                 type="submit"><span>Finalizar com Mercado Pago</span></button>
                          </div>
                      </div>
 
@@ -417,15 +419,15 @@
                  const mp = new MercadoPago("{{ $paydata['public_key'] }}");
 
                  const cardNumberElement = mp.fields.create('cardNumber', {
-                     placeholder: "Card Number"
+                     placeholder: "Número do cartão"
                  }).mount('cardNumber');
 
                  const expirationDateElement = mp.fields.create('expirationDate', {
-                     placeholder: "MM/YY",
+                     placeholder: "MM/AA",
                  }).mount('expirationDate');
 
                  const securityCodeElement = mp.fields.create('securityCode', {
-                     placeholder: "Security Code"
+                     placeholder: "Código de segurança"
                  }).mount('securityCode');
 
 

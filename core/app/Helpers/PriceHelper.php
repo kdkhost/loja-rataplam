@@ -193,6 +193,7 @@ class PriceHelper
         $grand_total = ($cart_total + ($shipping ? $shipping['price'] : 0)) + $total_tax;
         $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
         $grand_total = $grand_total + $order->state_price;
+        $grand_total = $grand_total + (float) ($order->gateway_fee ?? 0);
 
         $total_amount = round($grand_total * $order->currency_value, 2);
         if (!$trns) {
@@ -235,6 +236,7 @@ class PriceHelper
 
         $grand_total = ($cart_total + ($shipping ? $shipping['price'] : 0)) + $total_tax;
         $grand_total = $grand_total - ($discount ? $discount['discount'] : 0);
+        $grand_total = $grand_total + (float) ($order->gateway_fee ?? 0);
         $curr = self::activeCurrency();
         $total_amount = round($grand_total * $curr->value, 2);
 

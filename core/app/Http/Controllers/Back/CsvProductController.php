@@ -14,7 +14,6 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\ImageManagerStatic as Image;
 
 class CsvProductController extends Controller
 {
@@ -214,17 +213,15 @@ class CsvProductController extends Controller
                 Storage::delete($path . '/' . $delete);
             }
 
-            $photoName = 'OM_' . time() .  Str::random(8) . '.png';
-            $thumbnailName = 'OM_' . time() .  Str::random(8) . '.png';
+            $extension = strtolower($file->getClientOriginalExtension() ?: 'png');
+            $photoName = 'OM_' . time() .  Str::random(8) . '.' . $extension;
+            $thumbnailName = 'OM_' . time() .  Str::random(8) . '.' . $extension;
 
             Storage::putFileAs($path, $file, $photoName);
 
 
-            $image = \Image::make($file)->resize(230, 230);
-
-
             $thumbnailPath = $path . '/' . $thumbnailName;
-            Storage::put($thumbnailPath, (string) $image->encode());
+            Storage::put($thumbnailPath, ImageHelper::thumbnailContents($file));
 
 
             return [$photoName, $thumbnailName];

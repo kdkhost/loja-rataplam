@@ -16,6 +16,7 @@ use App\{
 };
 use App\Helpers\PriceHelper;
 use App\Helpers\SmsHelper;
+use App\Models\Country;
 use App\Models\Currency;
 use App\Models\Item;
 use App\Models\Setting;
@@ -24,6 +25,7 @@ use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Mollie\Laravel\Facades\Mollie;
 use Stripe\Price;
 
@@ -105,6 +107,7 @@ class CheckoutController extends Controller
         $data['shipping'] = $shipping;
         $data['tax'] = $total_tax;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();
+        $data['countries'] = $this->activeCountries();
 
         return view('front.checkout.index', $data);
     }
@@ -169,6 +172,7 @@ class CheckoutController extends Controller
         $data['shipping'] = $shipping;
         $data['tax'] = $total_tax;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();
+        $data['countries'] = $this->activeCountries();
 
         return view('front.checkout.billing', $data);
     }
@@ -178,7 +182,7 @@ class CheckoutController extends Controller
     public function billingStore(Request $request)
     {
         // laravel validation
-        $request->validate([
+        $rules = [
             'bill_first_name' => 'required',
             'bill_last_name' => 'required',
             'bill_email' => 'required|email',
@@ -186,7 +190,13 @@ class CheckoutController extends Controller
             'bill_address1' => 'required',
             'bill_city' => 'required',
             'bill_zip' => 'required',
-        ]);
+        ];
+
+        if (PriceHelper::CheckDigital()) {
+            $rules['bill_country'] = ['required', $this->activeCountryRule()];
+        }
+
+        $request->validate($rules, $this->countryValidationMessages('bill_country'));
 
         if ($request->same_ship_address) {
             Session::put('billing_address', $request->all());
@@ -277,6 +287,7 @@ class CheckoutController extends Controller
         $data['shipping'] = $shipping;
         $data['tax'] = $total_tax;
         $data['payments'] = PaymentSetting::whereStatus(1)->get();
+        $data['countries'] = $this->activeCountries();
         return view('front.checkout.shipping', $data);
     }
 
@@ -292,7 +303,8 @@ class CheckoutController extends Controller
             'ship_address1' => 'required',
             'ship_zip' => 'required',
             'ship_city' => 'required',
-        ]);
+            'ship_country' => ['required', $this->activeCountryRule()],
+        ], $this->countryValidationMessages('ship_country'));
 
         Session::put('shipping_address', $request->all());
         return redirect(route('front.checkout.payment'));
@@ -814,5 +826,23 @@ class CheckoutController extends Controller
         $data['grand_total'] = PriceHelper::setCurrencyPrice($total_amount);
 
         return response()->json($data);
+    }
+
+    private function activeCountries()
+    {
+        return Country::whereStatus(1)->orderBy('name')->get();
+    }
+
+    private function activeCountryRule()
+    {
+        return Rule::exists('countries', 'name')->where(fn ($query) => $query->where('status', 1));
+    }
+
+    private function countryValidationMessages(string $field): array
+    {
+        return [
+            $field . '.required' => 'Selecione um país liberado para venda.',
+            $field . '.exists' => 'Este país não está liberado para venda.',
+        ];
     }
 }

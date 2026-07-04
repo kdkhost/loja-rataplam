@@ -8,12 +8,14 @@ use App\{
     Repositories\Front\UserRepository
 };
 use App\Helpers\ImageHelper;
+use App\Models\Country;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Models\Subscriber;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
@@ -71,7 +73,8 @@ class AccountController extends Controller
     {
         $user = Auth::user();
         return view('user.dashboard.address',[
-            'user' => $user
+            'user' => $user,
+            'countries' => $this->activeCountries(),
         ]);
     }
 
@@ -84,8 +87,8 @@ class AccountController extends Controller
             'bill_zip'      => 'nullable|max:100',
             'bill_city'      => 'required|max:100',
             'bill_company'   => 'nullable|max:100',
-            'bill_country'   => 'required|max:100',
-        ]);
+            'bill_country'   => ['required', 'max:100', $this->activeCountryRule()],
+        ], $this->countryValidationMessages('bill_country'));
         $user =  Auth::user();
         $input = $request->all();
         $user->update($input);
@@ -101,8 +104,8 @@ class AccountController extends Controller
             'ship_zip'      => 'nullable|max:100',
             'ship_city'      => 'required|max:100',
             'ship_company'   => 'nullable|max:100',
-            'ship_country'   => 'required|max:100',
-        ]);
+            'ship_country'   => ['required', 'max:100', $this->activeCountryRule()],
+        ], $this->countryValidationMessages('ship_country'));
         $user =  Auth::user();
         $input = $request->all();
         $user->update($input);
@@ -118,6 +121,24 @@ class AccountController extends Controller
         $user->delete();
         Session::flash('success',__('Your account successfully remove'));
         return redirect(route('front.index'));
+    }
+
+    private function activeCountries()
+    {
+        return Country::whereStatus(1)->orderBy('name')->get();
+    }
+
+    private function activeCountryRule()
+    {
+        return Rule::exists('countries', 'name')->where(fn ($query) => $query->where('status', 1));
+    }
+
+    private function countryValidationMessages(string $field): array
+    {
+        return [
+            $field . '.required' => 'Selecione um país liberado para venda.',
+            $field . '.exists' => 'Este país não está liberado para venda.',
+        ];
     }
 
 

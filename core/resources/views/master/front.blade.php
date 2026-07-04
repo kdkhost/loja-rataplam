@@ -4,6 +4,10 @@
         : DB::table('languages')->where('type', 'Website')->where('status', 1)->where('is_default', 1)->first();
     $websiteLanguage = $websiteLanguage ?: DB::table('languages')->where('type', 'Website')->where('status', 1)->first();
     $websiteLocale = $websiteLanguage ? ($websiteLanguage->name ?: pathinfo($websiteLanguage->file, PATHINFO_FILENAME)) : app()->getLocale();
+    $activeWebsiteLanguages = DB::table('languages')->where('type', 'Website')->where('status', 1)->orderByDesc('is_default')->orderBy('language')->get();
+    $activeCurrencies = DB::table('currencies')->where('status', 1)->whereIn('name', ['BRL', 'USD'])->orderByDesc('is_default')->orderBy('name')->get();
+    $showLanguageSwitcher = $activeWebsiteLanguages->count() > 1;
+    $showCurrencySwitcher = $showLanguageSwitcher && $activeCurrencies->count() > 1;
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', $websiteLocale) }}">
@@ -129,8 +133,6 @@ body_theme4 @endif
                         <div class="t-m-s-a">
                             <a class="track-order-link" href="{{ route('front.order.track') }}"><i
                                     class="icon-map-pin"></i>{{ __('Track Order') }}</a>
-                            <a class="track-order-link compare-mobile d-lg-none"
-                                href="{{ route('fornt.compare.index') }}">{{ __('Compare') }}</a>
                         </div>
                     </div>
                     <div class="col-md-8">
@@ -140,15 +142,12 @@ body_theme4 @endif
                                 href="{{ route('user.wishlist.index') }}"><i
                                     class="icon-heart"></i>{{ __('Wishlist') }}</a>
 
-                            @php
-                                $activeLanguages = DB::table('languages')->whereType('Website')->where('status', 1)->whereIn('language', ['English', 'Português', 'Portugues', 'Portuguese'])->get();
-                            @endphp
-                            @if ($activeLanguages->count() > 1)
+                            @if ($showLanguageSwitcher)
                             <div class="t-h-dropdown ">
                                 <a class="main-link" href="#">{{ __('Language') }}<i
                                         class="icon-chevron-down"></i></a>
                                 <div class="t-h-dropdown-menu">
-                                    @foreach ($activeLanguages as $language)
+                                    @foreach ($activeWebsiteLanguages as $language)
                                         <a class="{{ Session::get('language') == $language->id ? 'active' : ($language->is_default == 1 && !Session::has('language') ? 'active' : '') }}"
                                             href="{{ route('front.language.setup', $language->id) }}"><i
                                                 class="icon-chevron-right pr-2"></i>{{ $language->language }}</a>
@@ -158,17 +157,19 @@ body_theme4 @endif
                             @endif
 
 
+                            @if ($showCurrencySwitcher)
                             <div class="t-h-dropdown ">
                                 <a class="main-link" href="#">{{ __('Currency') }}<i
                                         class="icon-chevron-down"></i></a>
                                 <div class="t-h-dropdown-menu">
-                                    @foreach (DB::table('currencies')->where('status', 1)->whereIn('name', ['BRL', 'USD'])->get() as $currency)
+                                    @foreach ($activeCurrencies as $currency)
                                         <a class="{{ Session::get('currency') == $currency->id ? 'active' : ($currency->is_default == 1 && !Session::has('currency') ? 'active' : '') }}"
                                             href="{{ route('front.currency.setup', $currency->id) }}"><i
                                                 class="icon-chevron-right pr-2"></i>{{ $currency->name }}</a>
                                     @endforeach
                                 </div>
                             </div>
+                            @endif
 
                             <div class="login-register ">
                                 @if (!Auth::user())
@@ -287,11 +288,12 @@ body_theme4 @endif
                             </div>
 
                             <!-- Mobile Menu-->
-                            <div class="mobile-menu">
+                            <div class="mobile-menu-backdrop" data-mobile-menu-close></div>
+                            <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
                                 <!-- Slideable (Mobile) Menu-->
                                 <div class="mm-heading-area">
                                     <h4>{{ __('Navigation') }}</h4>
-                                    <div class="toolbar-item visible-on-mobile mobile-menu-toggle mm-t-two">
+                                    <div class="toolbar-item visible-on-mobile mobile-menu-toggle mm-t-two" data-mobile-menu-close>
                                         <a href="#">
                                             <div> <i class="icon-x"></i></div>
                                         </a>
@@ -458,6 +460,20 @@ body_theme4 @endif
     <!--    announcement banner section end   -->
 
     <!-- Site Footer-->
+    @php
+        $formatBusinessTime = function ($time) {
+            if (!$time) {
+                return '';
+            }
+
+            try {
+                return \Carbon\Carbon::parse($time)->format('H:i');
+            } catch (\Throwable $e) {
+                return trim($time);
+            }
+        };
+        $footerWorkingDays = trim(rtrim($setting->working_days_from_to, ':'));
+    @endphp
     <footer class="site-footer">
         <div class="container">
             <div class="row">
@@ -469,8 +485,7 @@ body_theme4 @endif
                         <p class="mb-1"><strong>{{ __('Phone') }}: </strong> {{ $setting->footer_phone }}</p>
                         <p class="mb-1"><strong>{{ __('Email') }}: </strong> {{ $setting->footer_email }}</p>
                         <ul class="list-unstyled text-sm">
-                            <li><span class=""><strong>{{ $setting->working_days_from_to }}:
-                                    </strong></span>{{ $setting->friday_start }} - {{ $setting->friday_end }}</li>
+                            <li><span class=""><strong>{{ $footerWorkingDays }}: </strong></span>{{ $formatBusinessTime($setting->friday_start) }} - {{ $formatBusinessTime($setting->friday_end) }}</li>
                         </ul>
                         @php
                             $links = json_decode($setting->social_link, true)['links'];
@@ -693,7 +708,7 @@ body_theme4 @endif
             </div>
         @endif
         <style>
-            .commerce-popup-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.52);z-index:1040}.commerce-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1041;width:min(520px,calc(100% - 32px));background:#fff;border-radius:8px;box-shadow:0 28px 80px rgba(17,24,39,.28);overflow:hidden}
+            .commerce-popup-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.52);z-index:1060}.commerce-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1061;width:min(520px,calc(100% - 32px));background:#fff;border-radius:8px;box-shadow:0 28px 80px rgba(17,24,39,.28);overflow:hidden}
             .commerce-popup img{width:100%;max-height:260px;object-fit:cover}.commerce-popup__body{padding:28px;text-align:center}.commerce-popup__body h3{margin:0 0 12px}.commerce-popup__body p{color:#6b7280}.commerce-popup__close{position:absolute;right:10px;top:10px;border:0;background:#fff;color:#111827;width:34px;height:34px;border-radius:50%;font-size:24px;line-height:1;box-shadow:0 6px 18px rgba(17,24,39,.16)}.commerce-popup__coupon{display:inline-block;margin:8px 0 18px;padding:10px 18px;border:1px dashed #177dff;border-radius:6px;color:#177dff;font-weight:700;letter-spacing:.08em}.commerce-popup__badge{display:inline-block;margin-bottom:12px;padding:7px 12px;border-radius:4px;background:#111827;color:#fff;font-size:12px;font-weight:700;letter-spacing:.08em}.commerce-popup__price{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px}.commerce-popup__price span{text-decoration:line-through;color:#9ca3af}.commerce-popup__price strong{font-size:24px;color:#177dff}.commerce-popup-countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.commerce-popup-countdown div{border:1px solid #e5e7eb;border-radius:6px;padding:8px 4px}.commerce-popup-countdown strong{display:block;color:#111827;font-size:20px}.commerce-popup-countdown small{color:#6b7280;text-transform:uppercase;font-size:10px}
         </style>
     @endif
@@ -958,11 +973,37 @@ body_theme4 @endif
         <script>
             (function () {
                 var backdrop = document.getElementById('commerce-popup-backdrop');
+                var storage = null;
+                try {
+                    storage = window.sessionStorage;
+                } catch (e) {
+                    storage = null;
+                }
+
+                function hasSeen(key) {
+                    return storage ? storage.getItem(key) : false;
+                }
+
+                function setSeen(key) {
+                    if (storage) storage.setItem(key, '1');
+                }
+
+                function hasOpenPopup() {
+                    return !!document.querySelector('.commerce-popup:not([hidden])');
+                }
+
                 function openPopup(id) {
                     var popup = document.getElementById(id);
-                    if (!popup || !backdrop) return;
+                    if (!popup || !backdrop) return false;
+                    if (window.jQuery && window.jQuery.magnificPopup) {
+                        window.jQuery.magnificPopup.close();
+                    }
+                    document.querySelectorAll('.commerce-popup').forEach(function (currentPopup) {
+                        currentPopup.hidden = true;
+                    });
                     backdrop.hidden = false;
                     popup.hidden = false;
+                    return true;
                 }
                 function closePopups() {
                     if (backdrop) backdrop.hidden = true;
@@ -974,6 +1015,9 @@ body_theme4 @endif
                     button.addEventListener('click', closePopups);
                 });
                 if (backdrop) backdrop.addEventListener('click', closePopups);
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') closePopups();
+                });
 
                 @if ($promoPopupActive)
                     var countdown = document.querySelector('.commerce-popup-countdown');
@@ -997,20 +1041,54 @@ body_theme4 @endif
                         setInterval(tickPromo, 1000);
                     }
 
-                    if (!sessionStorage.getItem('promo_popup_seen')) {
+                    if (!hasSeen('promo_popup_seen')) {
                         setTimeout(function () {
-                            sessionStorage.setItem('promo_popup_seen', '1');
-                            openPopup('promo-popup');
+                            if (openPopup('promo-popup')) {
+                                setSeen('promo_popup_seen');
+                            }
                         }, {{ (int) ($setting->promo_popup_delay ?: 3) * 1000 }});
                     }
                 @endif
 
                 @if ($setting->exit_popup_enabled)
-                    document.addEventListener('mouseleave', function (event) {
-                        if (event.clientY > 0 || sessionStorage.getItem('exit_popup_seen')) return;
-                        sessionStorage.setItem('exit_popup_seen', '1');
-                        openPopup('exit-popup');
+                    var exitPopupArmed = false;
+                    var exitTouchScroll = 0;
+                    var lastScrollY = window.scrollY || window.pageYOffset || 0;
+
+                    setTimeout(function () {
+                        exitPopupArmed = true;
+                    }, 900);
+
+                    function showExitPopup() {
+                        if (!exitPopupArmed || hasSeen('exit_popup_seen') || hasOpenPopup()) return;
+                        if (openPopup('exit-popup')) {
+                            setSeen('exit_popup_seen');
+                        }
+                    }
+
+                    document.addEventListener('mouseout', function (event) {
+                        var leavingWindow = !event.relatedTarget && !event.toElement;
+                        if (leavingWindow && event.clientY <= 8) {
+                            showExitPopup();
+                        }
                     });
+
+                    document.documentElement.addEventListener('mouseleave', function (event) {
+                        if (event.clientY <= 8) {
+                            showExitPopup();
+                        }
+                    });
+
+                    window.addEventListener('scroll', function () {
+                        var currentScrollY = window.scrollY || window.pageYOffset || 0;
+                        if (currentScrollY > 360) {
+                            exitTouchScroll = 1;
+                        }
+                        if (exitTouchScroll && currentScrollY < 120 && lastScrollY - currentScrollY > 70) {
+                            showExitPopup();
+                        }
+                        lastScrollY = currentScrollY;
+                    }, { passive: true });
                 @endif
             })();
         </script>
