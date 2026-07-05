@@ -10,6 +10,7 @@ use App\Models\InternalCronTask;
 use App\Models\Item;
 use App\Models\Setting;
 use App\Services\CorreiosService;
+use App\Services\Cron\InternalCronRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
@@ -135,23 +136,36 @@ class PlatformController extends Controller
 
     public function cron()
     {
+        app(InternalCronRegistry::class)->ensureDefaults();
+
         $tasks = InternalCronTask::orderBy('id', 'desc')->get();
         $frequencies = InternalCronTask::frequencies();
+        $cronRegistry = app(InternalCronRegistry::class);
+        $commonSettings = $cronRegistry->commonSettings();
+        $commandOptions = $cronRegistry->commandOptions();
+        $selectOptions = $cronRegistry->selectOptions();
 
-        return view('back.platform.cron', compact('tasks', 'frequencies'));
+        return view('back.platform.cron', compact('tasks', 'frequencies', 'commonSettings', 'commandOptions', 'selectOptions'));
     }
 
     public function storeCron(Request $request)
     {
         $data = $request->validate([
             'name' => 'required|max:255',
+            'description' => 'nullable|max:2000',
             'command' => 'required|max:255',
-            'frequency' => 'required|max:40',
+            'minute' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'hour' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'day' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'month' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'weekday' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
         ]);
+        $data['frequency'] = 'custom';
 
         $task = new InternalCronTask($data);
         $task->is_active = $request->has('is_active');
-        $task->next_run_at = now();
+        $task->is_system = 0;
+        $task->next_run_at = $task->calculateNextRun(now()->subMinute());
         $task->save();
 
         return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
@@ -161,12 +175,20 @@ class PlatformController extends Controller
     {
         $data = $request->validate([
             'name' => 'required|max:255',
+            'description' => 'nullable|max:2000',
             'command' => 'required|max:255',
-            'frequency' => 'required|max:40',
+            'minute' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'hour' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'day' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'month' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
+            'weekday' => 'required|max:40|regex:/^[0-9*,\/-]+$/',
         ]);
 
+        $data['frequency'] = 'custom';
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
-        $task->update($data);
+        $task->fill($data);
+        $task->next_run_at = $task->calculateNextRun(now()->subMinute());
+        $task->save();
 
         return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
     }

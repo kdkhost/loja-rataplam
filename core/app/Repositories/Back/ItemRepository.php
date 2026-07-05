@@ -8,6 +8,7 @@ use App\{
     Helpers\ImageHelper
 };
 use App\Models\Currency;
+use App\Services\Seo\ProductSeoAnalyzer;
 
 class ItemRepository
 {
@@ -37,6 +38,8 @@ class ItemRepository
         if($request->has('meta_keywords')){
             $input['meta_keywords'] = str_replace(["value", "{", "}", "[","]",":","\""], '', $request->meta_keywords);
         }
+
+        $input = $this->prepareSeoInput($input, $request);
 
         if($request->has('is_social')){
             $input['social_icons'] = json_encode($input['social_icons']);
@@ -122,6 +125,8 @@ class ItemRepository
         if($request->has('meta_keywords')){
             $input['meta_keywords'] = str_replace(["value", "{", "}", "[","]",":","\""], '', $request->meta_keywords);
         }
+
+        $input = $this->prepareSeoInput($input, $request, $item);
 
         $curr = Currency::where('is_default',1)->first();
         $input['discount_price'] = $request->discount_price / $curr->value;
@@ -280,6 +285,33 @@ class ItemRepository
             }
         }
         return $storeData;
+    }
+
+    private function prepareSeoInput(array $input, $request, ?Item $item = null): array
+    {
+        foreach ([
+            'seo_title',
+            'seo_focus_keyword',
+            'seo_canonical_url',
+            'seo_robots',
+            'og_title',
+            'og_description',
+            'og_image',
+            'twitter_title',
+            'twitter_description',
+            'twitter_image',
+        ] as $field) {
+            $input[$field] = trim((string) $request->input($field, $item ? $item->{$field} : '')) ?: null;
+        }
+
+        $input['seo_robots'] = $input['seo_robots'] ?: 'index,follow';
+
+        $analysis = app(ProductSeoAnalyzer::class)->analyzeFromArray(array_merge($item ? $item->toArray() : [], $input));
+        $input['seo_score'] = $analysis['score'];
+        $input['seo_analysis'] = $analysis['checks'];
+        $input['seo_last_analyzed_at'] = now();
+
+        return $input;
     }
 
 }

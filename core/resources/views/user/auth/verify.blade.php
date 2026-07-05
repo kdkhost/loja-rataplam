@@ -1,49 +1,68 @@
 @extends('master.front')
+
 @section('title')
-    {{ __('Login') }}
+    Verificar e-mail
 @endsection
+
+@section('style')
+    @include('user.auth.partials.premium-style')
+@endsection
+
 @section('content')
-    <!-- Page Title-->
-    <div class="page-title">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-12">
-                    <ul class="breadcrumbs">
-                        <li><a href="{{ route('front.index') }}">{{ __('Home') }}</a> </li>
-                        <li class="separator"></li>
-                        <li>{{ __('Verify Email') }}</li>
-                    </ul>
+    <section class="customer-auth-area" aria-label="Verificação de e-mail">
+        <div class="customer-auth-shell">
+            <div class="customer-auth-showcase">
+                <a class="customer-auth-logo" href="{{ route('front.index') }}" aria-label="{{ $setting->title }}">
+                    <img src="{{ url('/core/public/storage/images/' . $setting->logo) }}" alt="{{ $setting->title }}">
+                </a>
+
+                <div class="customer-auth-copy">
+                    <span class="customer-auth-kicker">Verificação</span>
+                    <h1>Confirme seu e-mail para ativar a conta.</h1>
+                    <p>Digite o código recebido para liberar seu acesso com segurança.</p>
+                </div>
+
+                <div class="customer-auth-benefits is-stacked" aria-label="Confirmação de cadastro">
+                    <div class="customer-auth-benefit">
+                        <i class="icon-mail"></i>
+                        <strong>Código por e-mail</strong>
+                        <span>Confira a mensagem enviada para o endereço cadastrado.</span>
+                    </div>
+                    <div class="customer-auth-benefit">
+                        <i class="icon-shield"></i>
+                        <strong>Conta protegida</strong>
+                        <span>Essa etapa ajuda a manter seus dados seguros.</span>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <!-- Page Content-->
 
-    <div class="container padding-bottom-3x mb-1">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <form class="card auth-form-card" method="post" action="{{ route('user.verify.submit') }}">
+            <div class="customer-auth-card">
+                <form class="customer-auth-form" method="post" action="{{ route('user.verify.submit') }}">
                     @csrf
-                    <div class="card-body ">
-                        <h4 class="margin-bottom-1x text-center">{{ __('Email Verification') }}</h4>
 
-                        <div class="form-group input-group">
-                            <input class="form-control" type="text" name="verify"
-                                placeholder="{{ __('Enter Verify Code') }}" value="{{ old('verify') }}">
+                    <h2>Verificar e-mail</h2>
+                    <p class="customer-auth-subtitle">Informe o código de verificação recebido no seu e-mail.</p>
+
+                    <div class="customer-auth-field">
+                        <label for="verify-code">Código de verificação</label>
+                        <div class="customer-auth-input">
+                            <i class="icon-check-circle"></i>
+                            <input id="verify-code" class="form-control" type="text" name="verify" value="{{ old('verify') }}" inputmode="numeric" autocomplete="one-time-code" required>
                         </div>
                         @error('verify')
-                            <p class="text-danger">{{ $message }}</p>
+                            <p class="customer-auth-error">{{ $message }}</p>
                         @enderror
+                    </div>
 
-                        <div class="text-center">
-                            <button class="btn btn-primary margin-bottom-none"
-                                type="submit"><span>{{ __('Verify') }}</span></button>
-                        </div>
-
+                    <div class="customer-auth-actions">
+                        <a class="customer-auth-secondary" href="{{ route('user.login') }}">Voltar ao login</a>
+                        <button class="customer-auth-submit" type="submit">
+                            <span>Verificar</span>
+                            <i class="icon-arrow-right"></i>
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
-    <!-- Site Footer-->
+    </section>
 @endsection

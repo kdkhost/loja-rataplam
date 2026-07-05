@@ -297,10 +297,12 @@ class FrontendController extends Controller
     public function product($slug)
     {
 
-        $item = Item::with('category')->whereStatus(1)->whereSlug($slug)->firstOrFail();
+        $item = Item::with(['category', 'brand', 'reviews'])->whereStatus(1)->whereSlug($slug)->firstOrFail();
         $video = explode('=', $item->video);
+        $seo = app(\App\Services\Seo\ProductSeoAnalyzer::class)->preview($item);
         return view('front.catalog.product', [
             'item'          => $item,
+            'seo'           => $seo,
             'reviews'       => $item->reviews()->where('status', 1)->paginate(3),
             'galleries'     => $item->galleries,
             'video'         => $item->video ? end($video) : '',

@@ -1,5 +1,9 @@
 @extends('master.back')
 
+@section('styles')
+    @include('back.item.partials.seo-styles')
+@endsection
+
 @section('content')
 
 <div class="container-fluid">
@@ -147,28 +151,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-body">
-                    <div class="form-group">
-                        <label for="meta_keywords">{{ __('Meta Keywords') }}
-                            </label>
-                        <input type="text" name="meta_keywords" class="tags"
-                            id="meta_keywords"
-                            placeholder="{{ __('Enter Meta Keywords') }}"
-                            value="">
-                    </div>
-
-                    <div class="form-group">
-                        <label
-                            for="meta_description">{{ __('Meta Description') }}
-                            </label>
-                        <textarea name="meta_description" id="meta_description"
-                            class="form-control" rows="5"
-                            placeholder="{{ __('Enter Meta Description') }}"
-                        >{{ old('meta_description') }}</textarea>
-                    </div>
-                </div>
-            </div>
+            @include('back.item.partials.seo-fields')
         </div>
         <div class="col-lg-4">
             <div class="card">
@@ -295,4 +278,8 @@
 
 </div>
 
+@endsection
+
+@section('scripts')
+    @include('back.item.partials.seo-scripts')
 @endsection

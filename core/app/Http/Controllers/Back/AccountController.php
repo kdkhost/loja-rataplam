@@ -14,6 +14,7 @@ use App\Models\Item;
 use App\Models\Order;
 use App\Models\Attribute;
 use App\Models\AttributeOption;
+use App\Services\Analytics\AnalyticsService;
 use Illuminate\Http\Request;
 
 class AccountController extends Controller
@@ -26,12 +27,15 @@ class AccountController extends Controller
      * @param  \App\Repositories\Back\AccountRepository $repository
      *
      */
-    public function __construct(AccountRepository $repository)
+    protected $analytics;
+
+    public function __construct(AccountRepository $repository, AnalyticsService $analytics)
     {
         $this->middleware('auth:admin');
         $this->middleware('adminlocalize');
 
         $this->repository = $repository;
+        $this->analytics = $analytics;
     }
 
     /**
@@ -100,7 +104,25 @@ class AccountController extends Controller
             'earning_days' => $earning_days,
             'order_sales' => $sales,
             'total_incomess' => $check_income,
+            'analyticsDashboard' => $this->analytics->dashboardData(),
         ]);
+    }
+
+    public function realtime()
+    {
+        return response()->json($this->analytics->dashboardData());
+    }
+
+    public function analytics()
+    {
+        return view('back.analytics.index', [
+            'analyticsDashboard' => $this->analytics->dashboardData(),
+        ]);
+    }
+
+    public function analyticsRealtime()
+    {
+        return response()->json($this->analytics->dashboardData());
     }
 
     /**

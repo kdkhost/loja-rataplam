@@ -22,6 +22,9 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
 
         //------------ DASHBOARD & PROFILE ------------
         Route::get('/', 'Back\AccountController@index')->name('back.dashboard');
+        Route::get('/dashboard/realtime', 'Back\AccountController@realtime')->name('back.dashboard.realtime');
+        Route::get('/analytics', 'Back\AccountController@analytics')->name('back.analytics.index');
+        Route::get('/analytics/realtime', 'Back\AccountController@analyticsRealtime')->name('back.analytics.realtime');
         Route::get('/profile', 'Back\AccountController@profileForm')->name('back.profile');
         Route::post('/profile/update', 'Back\AccountController@updateProfile')->name('back.profile.update');
         Route::get('/password', 'Back\AccountController@passwordResetForm')->name('back.password');
@@ -409,6 +412,7 @@ Route::group(['middleware' => 'maintainance'], function () {
         Route::post('/subscriber/submit', 'Front\FrontendController@subscribeSubmit')->name('front.subscriber.submit');
         Route::get('set/currency/{id}', 'Front\FrontendController@currency')->name('front.currency.setup');
         Route::get('set/language/{id}', 'Front\FrontendController@language')->name('front.language.setup');
+        Route::post('/analytics/event', 'Front\AnalyticsController@store')->name('front.analytics.event');
 
         // ---------- EXTRA INDEX ROUTE ----------//
         Route::get('popular/category/get/{slug}/{type}/{check}', 'Front\HomeCustomizeController@CategoryGet')->name('front.popular.category');

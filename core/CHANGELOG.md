@@ -9,6 +9,45 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Analitico, SEO por produto, crons cPanel, popups e rodape publico
+
+### Adicionado
+- Analitico publico robusto com rastreamento de visualizacoes, visitantes, paginas, produtos, dispositivos, origens e eventos de interacao.
+- Evento publico `/analytics/event` para registrar busca, clique em produto, favoritos, comparar, adicionar ao carrinho e comprar agora.
+- Pagina administrativa individualizada `/admin/analytics` com graficos de trafego, dispositivos, origens, produtos mais vistos, paginas mais acessadas e saude SEO.
+- SEO individual por produto com titulo SEO, palavra-chave foco, canonical, robots, Open Graph, Twitter/X, pontuacao, checklist e preview.
+- Schema.org `Product` em JSON-LD na pagina publica de cada produto.
+- Tarefas padrao do sistema na Central Interna de Cron: fila, cache, views, rotas, configuracoes e storage.
+- Comando `seo:recalculate-products` para recalcular a pontuacao SEO dos produtos existentes.
+- Agendamento de crons no formato WHM/cPanel por selects de minuto, hora, dia, mes e dia da semana.
+- Presets de cron iguais ao cPanel para minuto, 5/10/15/30 minutos, horario, diario, semanal e mensal.
+
+### Alterado
+- Dashboard passou a manter apenas os cards rapidos do analitico publico, com link para o analitico completo.
+- Central Interna de Cron passou a editar cada rotina em linha, com status, proxima execucao, ultima execucao e execucao manual.
+- Menu administrativo ganhou acesso direto a pagina de Analitico.
+- Rodape publico passou a exibir os creditos de desenvolvimento para Marcelo Brad - RJ e Eth Estrategias com links oficiais.
+
+### Corrigido
+- Popups publicos de anuncio/newsletter, PWA, promocao e saida agora usam fila unica, impedindo sobreposicao e conflito visual.
+- Meta tags antigas da pagina de produto foram corrigidas para usar os campos reais do produto e os dados SEO configurados.
+- Analise SEO deixou de gravar checklist em JSON duplicado, preservando o cast correto do model.
+- Retorno de paginas mais acessadas no servico analitico foi ajustado para array, evitando erro de tipo.
+
+### Banco de dados
+- `2026_07_05_000012_create_analytics_tables_and_product_seo_fields`
+- `2026_07_05_000013_add_cpanel_schedule_to_internal_cron_tasks_table`
+
+### Validacao
+- `php artisan migrate --force` executado para analitico, SEO e crons cPanel.
+- `php artisan route:list --path=analytics` executado com sucesso.
+- `php artisan route:list --path=internal-cron` executado com sucesso.
+- `php artisan view:cache` executado com sucesso.
+- `php artisan seo:recalculate-products --chunk=200` executado, recalculando 336 produtos.
+- `php artisan test` executado com sucesso: 2 testes passaram.
+- `php artisan view:clear` executado antes do fechamento.
+- `php -l` executado nos controllers, services, commands, models e migrations alterados.
+
 ## 2026-07-04 - Loja publica, checkout brasileiro, Mercado Pago Pix e organizacao operacional
 
 ### Adicionado

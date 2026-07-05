@@ -44,6 +44,7 @@
 
     <!-- Mobile Specific Meta Tag-->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon Icons-->
     <link rel="icon" type="image/png" href="{{ url('/core/public/storage/images/' . $setting->favicon) }}">
@@ -81,6 +82,7 @@
     <style>
         {{ $setting->custom_css }}
     </style>
+    @yield('style')
     {{-- Google AdSense Start --}}
     @if ($setting->is_google_adsense == '1')
         {!! $setting->google_adsense !!}
@@ -554,7 +556,13 @@ body_theme4 @endif
                 </div>
             </div>
             <!-- Copyright-->
-            <p class="footer-copyright"> {{ $setting->copy_right }}</p>
+            <p class="footer-copyright mb-1"> {{ $setting->copy_right }}</p>
+            <p class="footer-copyright mb-0">
+                Desenvolvido com amor e um coração batendo por
+                <a href="https://kdkhost.com.br" target="_blank" rel="noopener">Marcelo Brad - RJ</a>
+                e
+                <a href="https://ethestrategias.com.br" target="_blank" rel="noopener">Eth Estratégias</a>
+            </p>
         </div>
     </footer>
 
@@ -715,15 +723,21 @@ body_theme4 @endif
 
 
     @php
+        $announcementPopup = [];
+        $announcementPopup['is_announcement'] = $setting->is_announcement;
+        $announcementPopup['announcement_delay'] = $setting->announcement_delay;
+        $announcementPopup['overlay'] = $setting->overlay;
         $mainbs = [];
-        $mainbs['is_announcement'] = $setting->is_announcement;
+        $mainbs['is_announcement'] = 0;
         $mainbs['announcement_delay'] = $setting->announcement_delay;
         $mainbs['overlay'] = $setting->overlay;
+        $announcementPopup = json_encode($announcementPopup);
         $mainbs = json_encode($mainbs);
     @endphp
 
     <script>
         var mainbs = {!! $mainbs !!};
+        var rataplamAnnouncementPopup = {!! $announcementPopup !!};
         var decimal_separator = '{!! $setting->decimal_separator !!}';
         var thousand_separator = '{!! $setting->thousand_separator !!}';
         window.omnimartLocale = '{{ str_replace('_', '-', $websiteLocale) }}';
@@ -749,6 +763,99 @@ body_theme4 @endif
     <script type="text/javascript" src="{{ asset('assets/front/js/lazy.plugin.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/back/js/br-localization.js') }}"></script>
     <script type="text/javascript" src="{{ asset('assets/front/js/myscript.js') }}"></script>
+    <script>
+        (function () {
+            var endpoint = '{{ route('front.analytics.event') }}';
+            var token = document.querySelector('meta[name="csrf-token"]');
+            token = token ? token.getAttribute('content') : '';
+
+            function closest(element, selector) {
+                return element && element.closest ? element.closest(selector) : null;
+            }
+
+            function currentItemId() {
+                var input = document.getElementById('item_id');
+                return input ? input.value : null;
+            }
+
+            function idFromUrl(url) {
+                var match = String(url || '').match(/\/(\d+)(?:\?|#|$)/);
+                return match ? match[1] : null;
+            }
+
+            function track(eventName, category, metadata) {
+                metadata = metadata || {};
+                var itemId = metadata.item_id || currentItemId();
+                var payload = {
+                    event_name: eventName,
+                    event_category: category || 'publico',
+                    item_id: itemId || null,
+                    page_type: document.body ? document.body.getAttribute('data-page-type') : null,
+                    path: window.location.pathname,
+                    metadata: metadata
+                };
+
+                if (!window.fetch || !token) return;
+
+                fetch(endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    keepalive: true,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': token
+                    },
+                    body: JSON.stringify(payload)
+                }).catch(function () {});
+            }
+
+            window.RataplamAnalytics = { track: track };
+
+            document.addEventListener('click', function (event) {
+                var addToCart = closest(event.target, '#add_to_cart');
+                if (addToCart) {
+                    track('add_to_cart', 'produto', { item_id: currentItemId(), label: addToCart.textContent.trim() });
+                    return;
+                }
+
+                var buyNow = closest(event.target, '#but_to_cart');
+                if (buyNow) {
+                    track('buy_now', 'produto', { item_id: currentItemId(), label: buyNow.textContent.trim() });
+                    return;
+                }
+
+                var wishlist = closest(event.target, '.wishlist_store');
+                if (wishlist) {
+                    track('wishlist', 'produto', { item_id: idFromUrl(wishlist.getAttribute('href')) || currentItemId() });
+                    return;
+                }
+
+                var compare = closest(event.target, '.product_compare');
+                if (compare) {
+                    track('compare', 'produto', { item_id: idFromUrl(compare.getAttribute('data-target')) || currentItemId() });
+                    return;
+                }
+
+                var productLink = closest(event.target, 'a[href*="/product/"]');
+                if (productLink) {
+                    track('product_link_click', 'navegacao', {
+                        href: productLink.href,
+                        label: productLink.textContent.trim().slice(0, 120)
+                    });
+                }
+            }, true);
+
+            document.addEventListener('submit', function (event) {
+                var search = closest(event.target, 'form');
+                if (!search) return;
+                var queryInput = search.querySelector('input[name="search"], input[name="keyword"], input[type="search"]');
+                if (queryInput && queryInput.value.trim()) {
+                    track('search', 'busca', { term: queryInput.value.trim().slice(0, 120) });
+                }
+            }, true);
+        })();
+    </script>
     @yield('script')
 
     @if ($setting->is_facebook_messenger == '1')
@@ -885,9 +992,84 @@ body_theme4 @endif
         </script>
     @endif
 
+    <script>
+        window.RataplamPopupQueue = window.RataplamPopupQueue || (function () {
+            var activeKey = null;
+            var queue = [];
+
+            function hasQueued(key) {
+                return queue.some(function (entry) {
+                    return entry.key === key;
+                });
+            }
+
+            function openNext() {
+                if (activeKey || !queue.length) return;
+                var entry = queue.shift();
+                activeKey = entry.key;
+                entry.open();
+            }
+
+            return {
+                request: function (key, open) {
+                    if (activeKey === key || hasQueued(key)) return false;
+                    if (activeKey) {
+                        queue.push({ key: key, open: open });
+                        return false;
+                    }
+                    activeKey = key;
+                    open();
+                    return true;
+                },
+                release: function (key) {
+                    if (activeKey !== key) return;
+                    activeKey = null;
+                    setTimeout(openNext, 250);
+                },
+                isActive: function () {
+                    return !!activeKey;
+                }
+            };
+        })();
+    </script>
+
+    @if ($setting->is_announcement)
+        <script>
+            (function () {
+                var settings = window.rataplamAnnouncementPopup || {};
+                var delay = parseInt(settings.announcement_delay || 0, 10) * 1000;
+                var popupKey = 'announcement-popup';
+
+                function closeAnnouncement() {
+                    window.RataplamPopupQueue.release(popupKey);
+                }
+
+                function openAnnouncement() {
+                    var modal = document.getElementById('announcement-modal');
+                    if (!modal || !window.jQuery || !window.jQuery.magnificPopup) return;
+
+                    window.RataplamPopupQueue.request(popupKey, function () {
+                        window.jQuery.magnificPopup.open({
+                            items: { src: '#announcement-modal' },
+                            type: 'inline',
+                            mainClass: 'mfp-fade',
+                            removalDelay: 160,
+                            callbacks: {
+                                close: closeAnnouncement
+                            }
+                        });
+                    });
+                }
+
+                setTimeout(openAnnouncement, Math.max(0, delay));
+            })();
+        </script>
+    @endif
+
     @if ($setting->is_pwa && $setting->pwa_install_popup_enabled)
         <script>
             (function () {
+                var popupKey = 'pwa-install';
                 var deferredPrompt = null;
                 var popup = document.getElementById('pwa-install-popup');
                 var backdrop = document.getElementById('pwa-install-backdrop');
@@ -901,14 +1083,17 @@ body_theme4 @endif
 
                 function openInstallPopup() {
                     if (!popup || !backdrop || isInstalled() || sessionStorage.getItem('pwa_install_later')) return;
-                    backdrop.hidden = false;
-                    popup.hidden = false;
+                    window.RataplamPopupQueue.request(popupKey, function () {
+                        backdrop.hidden = false;
+                        popup.hidden = false;
+                    });
                 }
 
                 function closeInstallPopup(skipSession) {
                     if (backdrop) backdrop.hidden = true;
                     if (popup) popup.hidden = true;
                     if (skipSession) sessionStorage.setItem('pwa_install_later', '1');
+                    window.RataplamPopupQueue.release(popupKey);
                 }
 
                 window.addEventListener('beforeinstallprompt', function (event) {
@@ -973,6 +1158,7 @@ body_theme4 @endif
         <script>
             (function () {
                 var backdrop = document.getElementById('commerce-popup-backdrop');
+                var activeCommerceKey = null;
                 var storage = null;
                 try {
                     storage = window.sessionStorage;
@@ -989,27 +1175,38 @@ body_theme4 @endif
                 }
 
                 function hasOpenPopup() {
-                    return !!document.querySelector('.commerce-popup:not([hidden])');
+                    return !!document.querySelector('.commerce-popup:not([hidden])') || (window.RataplamPopupQueue && window.RataplamPopupQueue.isActive());
                 }
 
-                function openPopup(id) {
+                function openPopup(id, seenKey) {
                     var popup = document.getElementById(id);
                     if (!popup || !backdrop) return false;
-                    if (window.jQuery && window.jQuery.magnificPopup) {
-                        window.jQuery.magnificPopup.close();
-                    }
-                    document.querySelectorAll('.commerce-popup').forEach(function (currentPopup) {
-                        currentPopup.hidden = true;
+                    var popupKey = 'commerce-' + id;
+
+                    return window.RataplamPopupQueue.request(popupKey, function () {
+                        activeCommerceKey = popupKey;
+                        if (window.jQuery && window.jQuery.magnificPopup) {
+                            window.jQuery.magnificPopup.close();
+                        }
+                        document.querySelectorAll('.commerce-popup').forEach(function (currentPopup) {
+                            currentPopup.hidden = true;
+                        });
+                        backdrop.hidden = false;
+                        popup.hidden = false;
+                        if (seenKey) {
+                            setSeen(seenKey);
+                        }
                     });
-                    backdrop.hidden = false;
-                    popup.hidden = false;
-                    return true;
                 }
                 function closePopups() {
                     if (backdrop) backdrop.hidden = true;
                     document.querySelectorAll('.commerce-popup').forEach(function (popup) {
                         popup.hidden = true;
                     });
+                    if (activeCommerceKey) {
+                        window.RataplamPopupQueue.release(activeCommerceKey);
+                        activeCommerceKey = null;
+                    }
                 }
                 document.querySelectorAll('[data-popup-close]').forEach(function (button) {
                     button.addEventListener('click', closePopups);
@@ -1043,9 +1240,7 @@ body_theme4 @endif
 
                     if (!hasSeen('promo_popup_seen')) {
                         setTimeout(function () {
-                            if (openPopup('promo-popup')) {
-                                setSeen('promo_popup_seen');
-                            }
+                            openPopup('promo-popup', 'promo_popup_seen');
                         }, {{ (int) ($setting->promo_popup_delay ?: 3) * 1000 }});
                     }
                 @endif
@@ -1061,9 +1256,7 @@ body_theme4 @endif
 
                     function showExitPopup() {
                         if (!exitPopupArmed || hasSeen('exit_popup_seen') || hasOpenPopup()) return;
-                        if (openPopup('exit-popup')) {
-                            setSeen('exit_popup_seen');
-                        }
+                        openPopup('exit-popup', 'exit_popup_seen');
                     }
 
                     document.addEventListener('mouseout', function (event) {

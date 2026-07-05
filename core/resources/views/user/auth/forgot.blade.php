@@ -1,43 +1,69 @@
 @extends('master.front')
+
 @section('title')
-    {{__('Password Reset')}}
+    Recuperar senha
 @endsection
+
+@section('style')
+    @include('user.auth.partials.premium-style')
+@endsection
+
 @section('content')
-<!-- Page Title-->
-<div class="page-title">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12">
-                <ul class="breadcrumbs">
-                    <li><a href="{{route('front.index')}}">{{__('Home')}}</a> </li>
-                    <li class="separator"></li>
-                    <li>{{__('Password Reset')}}</li>
-                  </ul>
+    <section class="customer-auth-area" aria-label="Recuperação de senha">
+        <div class="customer-auth-shell">
+            <div class="customer-auth-showcase">
+                <a class="customer-auth-logo" href="{{ route('front.index') }}" aria-label="{{ $setting->title }}">
+                    <img src="{{ url('/core/public/storage/images/' . $setting->logo) }}" alt="{{ $setting->title }}">
+                </a>
+
+                <div class="customer-auth-copy">
+                    <span class="customer-auth-kicker">Recuperar acesso</span>
+                    <h1>Vamos ajudar você a entrar novamente.</h1>
+                    <p>Informe o e-mail usado no cadastro e enviaremos um link seguro para redefinir sua senha.</p>
+                </div>
+
+                <div class="customer-auth-benefits is-stacked" aria-label="Segurança da recuperação">
+                    <div class="customer-auth-benefit">
+                        <i class="icon-shield"></i>
+                        <strong>Link seguro</strong>
+                        <span>A redefinição é enviada somente para o e-mail da conta.</span>
+                    </div>
+                    <div class="customer-auth-benefit">
+                        <i class="icon-mail"></i>
+                        <strong>Confira sua caixa de entrada</strong>
+                        <span>Veja também a pasta de spam ou promoções.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="customer-auth-card">
+                <form class="customer-auth-form" method="POST" action="{{ route('user.forgot.submit') }}">
+                    @csrf
+
+                    <h2>Recuperar senha</h2>
+                    <p class="customer-auth-subtitle">Digite seu e-mail para receber o link de redefinição.</p>
+
+                    <div class="customer-auth-field">
+                        <label for="email-for-pass">E-mail</label>
+                        <div class="customer-auth-input">
+                            <i class="icon-mail"></i>
+                            <input class="form-control" type="email" name="email" id="email-for-pass" value="{{ old('email') }}" autocomplete="email" required>
+                        </div>
+                        @error('email')
+                            <p class="customer-auth-error">{{ $message }}</p>
+                        @enderror
+                        <small class="customer-auth-note">Use o mesmo e-mail informado no cadastro.</small>
+                    </div>
+
+                    <div class="customer-auth-actions">
+                        <a class="customer-auth-secondary" href="{{ route('user.login') }}">Voltar ao login</a>
+                        <button class="customer-auth-submit" type="submit">
+                            <span>Enviar link</span>
+                            <i class="icon-send"></i>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-  </div>
-  <!-- Page Content-->
-  <div class="container padding-bottom-3x mb-1">
-  <div class="row justify-content-center">
-          <div class="col-lg-8 col-md-10">
-            <form class="card mt-4" method="POST" action="{{route('user.forgot.submit')}}">
-                @csrf
-              <div class="card-body">
-                <div class="form-group">
-                <h4 class="d-block text-center mb-4">{{__('Forgot your password?')}}</h4>
-                  <label for="email-for-pass">{{__('Enter your email address')}}</label>
-                  <input class="form-control" type="text" name="email" id="email-for-pass" placeholder="{{__('Enter your email address')}}">
-                  @error('email')
-                  <p class="text-danger">{{$message}}</p>
-                  @enderror
-                  <small class="text-muted">{{__('Type in the email address you used when you registered with our website')}}</small>
-                </div>
-                <button class="btn btn-primary btn-sm" type="submit"><span>{{__('Get New Password')}}</span></button>
-                <a href="{{route('user.login')}}" class="btn btn-primary btn-sm" ><span>{{__('Login')}}</span></a>
-              </div>
-            </form>
-          </div>
-        </div>
-  </div>
+    </section>
 @endsection

@@ -4,19 +4,30 @@
     {{ $item->name }}
 @endsection
 
-
+@php
+    $productSeo = $seo ?? app(\App\Services\Seo\ProductSeoAnalyzer::class)->preview($item);
+    $productMeta = $productSeo['meta'];
+@endphp
 @section('meta')
-    <meta name="tile" content="{{ $item->title }}">
-    <meta name="keywords" content="{{ $item->meta_keywords }}">
-    <meta name="description" content="{{ $item->meta_description }}">
+    <meta name="title" content="{{ $productMeta['title'] }}">
+    <meta name="keywords" content="{{ $productMeta['keywords'] }}">
+    <meta name="description" content="{{ $productMeta['description'] }}">
+    <meta name="robots" content="{{ $productMeta['robots'] }}">
+    <link rel="canonical" href="{{ $productMeta['canonical'] }}">
 
-    <meta name="twitter:title" content="{{ $item->title }}">
-    <meta name="twitter:image" content="{{ url('/core/public/storage/images/' . $item->photo) }}">
-    <meta name="twitter:description" content="{{ $item->meta_description }}">
+    <meta property="og:type" content="product">
+    <meta property="og:site_name" content="{{ $setting->title }}">
+    <meta property="og:title" content="{{ $productMeta['og_title'] }}">
+    <meta property="og:description" content="{{ $productMeta['og_description'] }}">
+    <meta property="og:image" content="{{ $productMeta['og_image'] }}">
+    <meta property="og:url" content="{{ $productMeta['canonical'] }}">
 
-    <meta name="og:title" content="{{ $item->title }}">
-    <meta name="og:image" content="{{ url('/core/public/storage/images/' . $item->photo) }}">
-    <meta name="og:description" content="{{ $item->meta_description }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ $productMeta['twitter_title'] }}">
+    <meta name="twitter:image" content="{{ $productMeta['twitter_image'] }}">
+    <meta name="twitter:description" content="{{ $productMeta['twitter_description'] }}">
+
+    <script type="application/ld+json">{!! json_encode($productSeo['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 @endsection
 
 

@@ -5,6 +5,12 @@
             <p>{{ __('Dashboard') }}</p>
         </a>
     </li>
+    <li class="nav-item">
+        <a href="{{ route('back.analytics.index') }}">
+            <i class="fas fa-chart-line"></i>
+            <p>{{ __('Analitico') }}</p>
+        </a>
+    </li>
 
     @php
         if (Auth::guard('admin')->user()->role->section != 'null') {

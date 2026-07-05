@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\InternalCronTask;
+use App\Services\Cron\InternalCronRegistry;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Throwable;
@@ -15,6 +16,8 @@ class RunInternalCron extends Command
 
     public function handle(): int
     {
+        app(InternalCronRegistry::class)->ensureDefaults();
+
         $query = InternalCronTask::query()->where('is_active', 1);
 
         if ($this->option('task')) {

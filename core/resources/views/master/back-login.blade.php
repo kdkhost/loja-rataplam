@@ -19,6 +19,7 @@
 	@if(optional(DB::table('languages')->where('type', 'Dashboard')->where('status', 1)->where('is_default',1)->first())->rtl == 1)
     <link rel="stylesheet" href="{{ asset('assets/back/css/rtl.css') }}">
     @endif
+    @yield('style')
 </head>
 
 <body class="login">
@@ -67,5 +68,6 @@
             });
         });
     </script>
+    @yield('script')
 </body>
 </html>
