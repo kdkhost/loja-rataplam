@@ -20,6 +20,14 @@ class Kernel extends ConsoleKernel
     }
 
     /**
+     * Get the timezone that should be used by scheduled events.
+     */
+    protected function scheduleTimezone()
+    {
+        return config('app.timezone', 'America/Sao_Paulo');
+    }
+
+    /**
      * Register the commands for the application.
      */
     protected function commands(): void

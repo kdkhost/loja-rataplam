@@ -9,6 +9,19 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Timezone brasileiro
+
+### Alterado
+- Timezone padrao do Laravel passou a usar `APP_TIMEZONE`, com fallback em `America/Sao_Paulo`.
+- Scheduler do Laravel passou a executar eventos usando explicitamente o timezone configurado da aplicacao.
+- Ambiente local e configuracao PHP de hospedagem passaram a declarar `America/Sao_Paulo`.
+
+### Validacao
+- `php artisan config:clear` executado para remover configuracao antiga em cache.
+- `php artisan tinker --execute="echo config('app.timezone').'|'.now()->timezone->getName().'|'.now()->format('d/m/Y H:i:s');"` confirmou `America/Sao_Paulo`.
+- `php artisan schedule:list` executado com sucesso, confirmando o carregamento do scheduler.
+- `php -l app/Console/Kernel.php` executado com sucesso.
+
 ## 2026-07-05 - Analitico, SEO por produto, crons cPanel, popups e rodape publico
 
 ### Adicionado
