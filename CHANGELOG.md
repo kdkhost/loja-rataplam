@@ -9,6 +9,18 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Reformulacao visual da Central Interna de Cron
+
+### Alterado
+- Pagina `/admin/internal-cron` foi reorganizada com cabecalho, indicadores rapidos, comando geral da hospedagem, formulario de nova tarefa e cards individuais por rotina.
+- Tarefas registradas passaram a exibir status, tipo, proxima execucao, ultima execucao, expressao cron e saida operacional em blocos mais legiveis.
+- Agendamento no padrao cPanel recebeu preview dinamico da expressao cron e botao para copiar o comando geral da hospedagem.
+- Layout da Central Interna de Cron foi ajustado para responsividade e compatibilidade com tema claro/escuro do painel.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+- `php -l resources/views/back/platform/cron.blade.php` executado com sucesso.
+
 ## 2026-07-05 - Timezone brasileiro
 
 ### Alterado
