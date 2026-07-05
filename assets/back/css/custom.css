@@ -783,6 +783,103 @@ input.btn.btn-primary.note-btn.note-btn-primary.note-video-btn {
   width: auto !important;
 }
 
+/* Admin sidebar text and theme contrast */
+.sidebar {
+  --admin-sidebar-text: #344054;
+  --admin-sidebar-muted: #667085;
+  --admin-sidebar-subtext: #4b5565;
+  --admin-sidebar-hover-bg: #f2f6fc;
+  --admin-sidebar-active-bg: #edf5ff;
+  --admin-sidebar-active-text: #177dff;
+  --admin-sidebar-border: #edf1f7;
+}
+
+.sidebar .user,
+.sidebar .sidebar-footer {
+  border-color: var(--admin-sidebar-border) !important;
+}
+
+.sidebar .user .info a > span {
+  color: var(--admin-sidebar-text) !important;
+  font-weight: 700;
+}
+
+.sidebar .user .info a > span .user-level,
+.sidebar .sidebar-footer span {
+  color: var(--admin-sidebar-muted) !important;
+}
+
+.sidebar .nav > .nav-item > a,
+.sidebar .nav-collapse li a {
+  color: var(--admin-sidebar-text) !important;
+}
+
+.sidebar .nav > .nav-item > a p,
+.sidebar .nav-collapse li a .sub-item {
+  color: var(--admin-sidebar-text) !important;
+  opacity: 1 !important;
+  font-weight: 600;
+}
+
+.sidebar .nav-collapse li a .sub-item {
+  color: var(--admin-sidebar-subtext) !important;
+}
+
+.sidebar .nav > .nav-item > a i,
+.sidebar .nav > .nav-item > a .caret,
+.sidebar .nav-collapse li a .sidebar-mini-icon {
+  color: var(--admin-sidebar-muted) !important;
+}
+
+.sidebar .nav-collapse li a .sub-item:before {
+  background: var(--admin-sidebar-muted) !important;
+  opacity: .75;
+}
+
+.sidebar .nav > .nav-item.active > a,
+.sidebar .nav > .nav-item.submenu > a,
+.sidebar .nav > .nav-item > a:hover,
+.sidebar .nav > .nav-item > a:focus,
+.sidebar .nav-collapse li.active > a,
+.sidebar .nav-collapse li a:hover,
+.sidebar .nav-collapse li a:focus {
+  background: var(--admin-sidebar-hover-bg) !important;
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+.sidebar .nav > .nav-item.active > a,
+.sidebar .nav-collapse li.active > a {
+  background: var(--admin-sidebar-active-bg) !important;
+}
+
+.sidebar .nav > .nav-item.active > a p,
+.sidebar .nav > .nav-item.submenu > a p,
+.sidebar .nav > .nav-item > a:hover p,
+.sidebar .nav > .nav-item > a:focus p,
+.sidebar .nav-collapse li.active > a .sub-item,
+.sidebar .nav-collapse li a:hover .sub-item,
+.sidebar .nav-collapse li a:focus .sub-item {
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+.sidebar .nav > .nav-item.active > a i,
+.sidebar .nav > .nav-item.active > a .caret,
+.sidebar .nav > .nav-item.submenu > a i,
+.sidebar .nav > .nav-item.submenu > a .caret,
+.sidebar .nav > .nav-item > a:hover i,
+.sidebar .nav > .nav-item > a:hover .caret,
+.sidebar .nav > .nav-item > a:focus i,
+.sidebar .nav > .nav-item > a:focus .caret {
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+.sidebar .nav-collapse li.active > a .sub-item:before,
+.sidebar .nav-collapse li a:hover .sub-item:before,
+.sidebar .nav-collapse li a:focus .sub-item:before {
+  background: var(--admin-sidebar-active-text) !important;
+  opacity: 1;
+}
+
 .admin-theme-toggle {
   width: 34px;
   height: 34px;
@@ -876,6 +973,16 @@ html.admin-theme-dark .card {
   box-shadow: 0 10px 30px rgba(0, 0, 0, .22) !important;
 }
 
+html.admin-theme-dark .sidebar {
+  --admin-sidebar-text: #dbe5f4;
+  --admin-sidebar-muted: #93a4bd;
+  --admin-sidebar-subtext: #c4d0e2;
+  --admin-sidebar-hover-bg: #22304a;
+  --admin-sidebar-active-bg: #263a5a;
+  --admin-sidebar-active-text: #ffffff;
+  --admin-sidebar-border: #2c3a4f;
+}
+
 html.admin-theme-dark .main-panel > .content,
 html.admin-theme-dark .page-inner,
 html.admin-theme-dark .container-fluid {
@@ -937,6 +1044,72 @@ html.admin-theme-dark .dropdown-item:focus,
 html.admin-theme-dark .list-group-item {
   background: #233149 !important;
   color: #ffffff !important;
+}
+
+html.admin-theme-dark .sidebar .nav > .nav-item > a,
+html.admin-theme-dark .sidebar .nav-collapse li a {
+  color: var(--admin-sidebar-text) !important;
+}
+
+html.admin-theme-dark .sidebar .nav > .nav-item > a p,
+html.admin-theme-dark .sidebar .nav-collapse li a .sub-item,
+html.admin-theme-dark .sidebar .user .info a > span {
+  color: var(--admin-sidebar-text) !important;
+}
+
+html.admin-theme-dark .sidebar .user .info a > span .user-level,
+html.admin-theme-dark .sidebar .sidebar-footer span,
+html.admin-theme-dark .sidebar .nav > .nav-item > a i,
+html.admin-theme-dark .sidebar .nav > .nav-item > a .caret,
+html.admin-theme-dark .sidebar .nav-collapse li a .sidebar-mini-icon {
+  color: var(--admin-sidebar-muted) !important;
+}
+
+html.admin-theme-dark .sidebar .nav-collapse li a .sub-item {
+  color: var(--admin-sidebar-subtext) !important;
+}
+
+html.admin-theme-dark .sidebar .nav-collapse li a .sub-item:before {
+  background: var(--admin-sidebar-muted) !important;
+}
+
+html.admin-theme-dark .sidebar .nav > .nav-item.active > a,
+html.admin-theme-dark .sidebar .nav > .nav-item.submenu > a,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:hover,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:focus,
+html.admin-theme-dark .sidebar .nav-collapse li.active > a,
+html.admin-theme-dark .sidebar .nav-collapse li a:hover,
+html.admin-theme-dark .sidebar .nav-collapse li a:focus {
+  background: var(--admin-sidebar-active-bg) !important;
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+html.admin-theme-dark .sidebar .nav > .nav-item.active > a p,
+html.admin-theme-dark .sidebar .nav > .nav-item.submenu > a p,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:hover p,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:focus p,
+html.admin-theme-dark .sidebar .nav-collapse li.active > a .sub-item,
+html.admin-theme-dark .sidebar .nav-collapse li a:hover .sub-item,
+html.admin-theme-dark .sidebar .nav-collapse li a:focus .sub-item {
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+html.admin-theme-dark .sidebar .nav > .nav-item.active > a i,
+html.admin-theme-dark .sidebar .nav > .nav-item.active > a .caret,
+html.admin-theme-dark .sidebar .nav > .nav-item.submenu > a i,
+html.admin-theme-dark .sidebar .nav > .nav-item.submenu > a .caret,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:hover i,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:hover .caret,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:focus i,
+html.admin-theme-dark .sidebar .nav > .nav-item > a:focus .caret {
+  color: var(--admin-sidebar-active-text) !important;
+}
+
+html.admin-theme-dark .sidebar .nav-collapse li.active > a .sub-item:before,
+html.admin-theme-dark .sidebar .nav-collapse li a:hover .sub-item:before,
+html.admin-theme-dark .sidebar .nav-collapse li a:focus .sub-item:before {
+  background: var(--admin-sidebar-active-text) !important;
+  opacity: 1;
 }
 
 html.admin-theme-dark .form-control,

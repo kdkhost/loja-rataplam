@@ -9,6 +9,16 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Contraste da sidebar administrativa
+
+### Alterado
+- Textos, icones, submenus, indicadores e estados ativo/hover da sidebar administrativa foram padronizados para tema claro e tema escuro.
+- Subitens do menu administrativo passaram a ter cor explicita no tema escuro, evitando baixa leitura por heranca do template base.
+
+### Validacao
+- `git diff --check` executado sem erros de espaco em branco.
+- `php artisan view:cache` executado com sucesso para validar que as views continuam compilando.
+
 ## 2026-07-05 - Reformulacao visual da Central Interna de Cron
 
 ### Alterado
