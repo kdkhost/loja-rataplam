@@ -126,7 +126,7 @@
                                                     <div class="form-group">
                                                         <label for="announcement_button_text">{{ __('Button Text') }} *</label>
                                                         <input type="text" name="announcement_button_text" class="form-control" id="announcement_button_text"
-                                                            placeholder="{{ __('View more') }}" value="{{ $setting->announcement_button_text ?: __('View more') }}">
+                                                            placeholder="{{ __('View more') }}" value="{{ data_get($setting, 'announcement_button_text', __('View more')) }}">
                                                     </div>
 
                                                     <div class="form-group">

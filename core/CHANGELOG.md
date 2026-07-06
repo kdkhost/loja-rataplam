@@ -21,6 +21,7 @@ Formato padrao:
 - Botao do popup recebeu centralizacao vertical e horizontal completa no rótulo.
 - Botao do popup foi realinhado para herdar o padrao visual dos botoes do site publico.
 - Texto do botao do popup passou a ser configuravel pelo painel de anuncios.
+- O painel de anuncios passou a usar fallback seguro para o novo campo em bases antigas.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
