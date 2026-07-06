@@ -9,6 +9,17 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Ajuste de dimensao do popup de comunicacao
+
+### Corrigido
+- Popup de comunicacao/announcement passou a respeitar largura e altura maximas mais apropriadas para desktop e mobile.
+- Conteudo textual do popup voltou a ser exibido corretamente ao lado da imagem, sem ficar espremido ou escondido.
+- Fluxo de newsletter do popup foi preservado quando o tipo configurado for `newletter`.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+- Estrutura de popup revisada em `core/resources/views/includes/announcement-popup.blade.php`.
+
 ## 2026-07-05 - Contraste da sidebar administrativa
 
 ### Alterado
