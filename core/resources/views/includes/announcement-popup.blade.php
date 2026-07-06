@@ -74,8 +74,10 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        text-align: center;
         width: fit-content;
         min-height: 40px;
+        line-height: 1;
         padding: 0 16px;
         border-radius: 8px;
         background: {{ $setting->primary_color }};
@@ -90,6 +92,11 @@
         color: #fff;
         filter: brightness(.98);
         transform: translateY(-1px);
+    }
+
+    .announcement-btn > span {
+        display: block;
+        line-height: 1;
     }
 
     #announcement-overlay .input-group {
