@@ -9,6 +9,16 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Popup de comunicacao restaurado
+
+### Corrigido
+- Popup de comunicacao voltou a abrir normalmente apos a simplificacao do include.
+- Tamanho do popup foi mantido ajustado, com largura e altura limitadas no desktop e no mobile.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+- `php -l resources/views/includes/announcement-popup.blade.php` executado com sucesso.
+
 ## 2026-07-05 - Popup de comunicacao volta a renderizar sem imagem
 
 ### Corrigido
