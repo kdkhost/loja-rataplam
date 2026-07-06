@@ -55,7 +55,10 @@
         font-size: clamp(24px, 2.4vw, 34px);
         line-height: 1.1;
         font-weight: 800;
-        max-width: 10ch;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
         text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
     }
 
@@ -107,18 +110,22 @@
 
     @media (max-width: 575px) {
         .white-popup {
-            width: calc(100vw - 12px);
+            width: min(360px, calc(100vw - 14px));
             margin: 8px auto;
         }
 
+        #announcement-container.announcement-with-content {
+            min-height: 380px;
+            background-position: center right;
+        }
+
         #announcement-overlay.right-area {
-            width: 68%;
-            padding: 18px 14px 18px 18px;
+            width: 74%;
+            padding: 18px 12px 18px 18px;
         }
 
         #announcement-overlay .announcement-title {
-            font-size: 22px;
-            max-width: none;
+            font-size: 20px;
         }
 
         #announcement-overlay .announcement-text {
