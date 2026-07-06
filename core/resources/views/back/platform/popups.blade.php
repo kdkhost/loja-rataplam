@@ -187,7 +187,7 @@
         </div>
 
         <div class="form-group text-center">
-            <button type="submit" class="btn btn-secondary">{{ __('Submit') }}</button>
+            <button type="submit" class="btn btn-secondary">{{ __('Salvar') }}</button>
         </div>
     </form>
 </div>

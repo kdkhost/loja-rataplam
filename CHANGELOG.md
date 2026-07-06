@@ -9,6 +9,16 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-06 - Ajuste final do popup de saida
+
+### Corrigido
+- Popup de saida manteve a selecao conjunta de cupons e produtos, mas o fallback manual deixou de sobrescrever a copia do cupom.
+- Mensagens de salvamento do painel de popups foram padronizadas em portugues para evitar retorno de texto em ingles no admin.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+- `php artisan test --filter=AnnouncementPopupViewTest` executado com sucesso.
+
 ## 2026-07-05 - Reducao do popup de comunicacao
 
 ### Corrigido

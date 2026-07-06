@@ -94,7 +94,7 @@ class PlatformController extends Controller
 
         $setting->update($input);
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     private function generatePwaIcons(?string $sourceIcon): array
@@ -169,7 +169,7 @@ class PlatformController extends Controller
         $task->next_run_at = $task->calculateNextRun(now()->subMinute());
         $task->save();
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     public function updateCron(Request $request, InternalCronTask $task)
@@ -191,21 +191,21 @@ class PlatformController extends Controller
         $task->next_run_at = $task->calculateNextRun(now()->subMinute());
         $task->save();
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     public function runCron(InternalCronTask $task)
     {
         Artisan::call('internal-cron:run', ['--task' => $task->id]);
 
-        return redirect()->back()->withSuccess(__('Cron executed successfully.'));
+        return redirect()->back()->withSuccess(__('Cron executado com sucesso.'));
     }
 
     public function destroyCron(InternalCronTask $task)
     {
         $task->delete();
 
-        return redirect()->back()->withSuccess(__('Data Deleted Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados excluídos com sucesso.'));
     }
 
     public function correios()
@@ -234,7 +234,7 @@ class PlatformController extends Controller
         $data['correios_extra_days'] = $data['correios_extra_days'] ?? 0;
         Setting::findOrFail(1)->update($data);
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     public function testCorreios(Request $request, CorreiosService $service)
@@ -328,7 +328,7 @@ class PlatformController extends Controller
 
         $setting->update($data);
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     public function whatsapp()
@@ -410,7 +410,7 @@ class PlatformController extends Controller
 
         Setting::findOrFail(1)->update($data);
 
-        return redirect()->back()->withSuccess(__('Data Updated Successfully.'));
+        return redirect()->back()->withSuccess(__('Dados atualizados com sucesso.'));
     }
 
     private function normalizeAdminWhatsAppContacts(Request $request): array

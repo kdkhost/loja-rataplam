@@ -1575,11 +1575,6 @@ body_theme4 @endif
                                     }, 2000);
                                 });
                             };
-                            if (link) {
-                                actionBtn.onclick = function() {
-                                    window.location.href = link;
-                                };
-                            }
                         } else {
                             actionBtn.style.display = 'none';
                         }
