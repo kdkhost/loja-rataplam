@@ -128,6 +128,53 @@
             text-decoration: underline;
         }
 
+        .footer-developer-credit a[data-footer-tooltip] {
+            position: relative;
+            outline-offset: 3px;
+        }
+
+        .footer-developer-credit a[data-footer-tooltip]::before,
+        .footer-developer-credit a[data-footer-tooltip]::after {
+            position: absolute;
+            left: 50%;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, 8px);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+
+        .footer-developer-credit a[data-footer-tooltip]::before {
+            content: attr(data-footer-tooltip);
+            bottom: calc(100% + 10px);
+            min-width: max-content;
+            padding: 7px 10px;
+            border-radius: 6px;
+            background: #111827;
+            box-shadow: 0 8px 22px rgba(17, 24, 39, 0.18);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        .footer-developer-credit a[data-footer-tooltip]::after {
+            content: "";
+            bottom: calc(100% + 4px);
+            border-top: 6px solid #111827;
+            border-right: 6px solid transparent;
+            border-left: 6px solid transparent;
+        }
+
+        .footer-developer-credit a[data-footer-tooltip]:hover::before,
+        .footer-developer-credit a[data-footer-tooltip]:hover::after,
+        .footer-developer-credit a[data-footer-tooltip]:focus-visible::before,
+        .footer-developer-credit a[data-footer-tooltip]:focus-visible::after {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
         .footer-heart {
             display: inline-flex;
             align-items: center;
@@ -618,9 +665,9 @@ body_theme4 @endif
                     <span>Desenvolvido com amor</span>
                     <span class="footer-heart" role="img" aria-label="coração batendo">&#10084;</span>
                     <span>por</span>
-                    <a href="https://kdkhost.com.br" target="_blank" rel="noopener">Marcelo Brad - RJ</a>
+                    <a href="https://kdkhost.com.br" target="_blank" rel="noopener" data-footer-tooltip="KDKHost Soluções">Marcelo Brad - RJ</a>
                     <span>e</span>
-                    <a href="https://ethestrategias.com.br" target="_blank" rel="noopener">Eth Estratégias</a>
+                    <a href="https://ethestrategias.com.br" target="_blank" rel="noopener" data-footer-tooltip="Eth Estratégias">Eth Estratégias</a>
                 </p>
             </div>
         </div>
