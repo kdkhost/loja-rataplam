@@ -24,54 +24,46 @@
         aspect-ratio: 1.92 / 1;
         min-height: 0;
         max-height: calc(100vh - 24px);
-        background: #f5efe3;
+        background: #f5efe3 center center / cover no-repeat;
         overflow: hidden;
         border-radius: 10px;
     }
 
     #announcement-container .left-area {
-        position: absolute;
-        inset: 0;
-        background: #f5efe3 center center / cover no-repeat;
-        overflow: hidden;
-    }
-
-    #announcement-container .left-area img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
+        display: none;
     }
 
     #announcement-overlay.right-area {
         position: absolute;
-        inset: 0;
+        inset: 0 auto 0 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: flex-start;
         gap: 12px;
-        width: 54%;
-        padding: clamp(24px, 3.2vw, 42px);
+        width: min(44%, 420px);
+        padding: clamp(24px, 3.2vw, 40px);
         overflow: auto;
-        background: linear-gradient(90deg, rgba(255, 249, 235, 0.92) 0%, rgba(255, 249, 235, 0.72) 58%, rgba(255, 249, 235, 0) 100%);
+        background: linear-gradient(90deg, rgba(255, 249, 235, 0.94) 0%, rgba(255, 249, 235, 0.84) 68%, rgba(255, 249, 235, 0.62) 100%);
     }
 
     #announcement-overlay .announcement-title {
         margin: 0;
         color: #111827;
-        font-size: clamp(26px, 2.6vw, 38px);
+        font-size: clamp(24px, 2.4vw, 34px);
         line-height: 1.1;
         font-weight: 800;
-        max-width: 9ch;
+        max-width: 10ch;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
     }
 
     #announcement-overlay .announcement-text {
         margin: 0;
-        color: #4b5563;
-        font-size: 17px;
-        line-height: 1.55;
-        max-width: 22ch;
+        color: #374151;
+        font-size: 16px;
+        line-height: 1.6;
+        max-width: 26ch;
+        text-shadow: 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
     #announcement-overlay .announcement-dynamic-content {
@@ -86,7 +78,7 @@
         min-height: 40px;
         padding: 0 16px;
         border-radius: 8px;
-        background: #f59e0b;
+        background: {{ $setting->primary_color }};
         color: #fff;
         font-weight: 700;
         border: 0;
@@ -120,19 +112,14 @@
             max-height: calc(100vh - 24px);
         }
 
-        #announcement-container .left-area {
-            position: absolute;
-            inset: 0;
-        }
-
         #announcement-overlay.right-area {
-            width: 62%;
+            width: 58%;
             padding: 22px 18px 22px 24px;
-            background: linear-gradient(90deg, rgba(255, 249, 235, 0.94) 0%, rgba(255, 249, 235, 0.76) 64%, rgba(255, 249, 235, 0) 100%);
+            background: linear-gradient(90deg, rgba(255, 249, 235, 0.95) 0%, rgba(255, 249, 235, 0.84) 72%, rgba(255, 249, 235, 0.58) 100%);
         }
 
         #announcement-overlay .announcement-text {
-            max-width: 26ch;
+            max-width: 28ch;
         }
     }
 
@@ -143,7 +130,7 @@
         }
 
         #announcement-overlay.right-area {
-            width: 72%;
+            width: 68%;
             padding: 18px 14px 18px 18px;
         }
 
@@ -159,12 +146,8 @@
     }
 </style>
 
-<div id="announcement-container" class="announcement-with-content">
-    <div class="left-area" @if ($announcementImage) style="background-image:url('{{ $announcementImage }}');" @endif>
-        @if ($announcementImage)
-            <img src="{{ $announcementImage }}" alt="{{ $announcementTitle ?: __('Announcement') }}">
-        @endif
-    </div>
+<div id="announcement-container" class="announcement-with-content" @if ($announcementImage) style="background-image:url('{{ $announcementImage }}');" @endif>
+    <div class="left-area" aria-hidden="true"></div>
 
     <div id="announcement-overlay" class="right-area">
         @if ($announcementTitle)

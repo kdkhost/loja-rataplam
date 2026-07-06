@@ -17,6 +17,7 @@ Formato padrao:
 - Popup de comunicacao agora acompanha a altura visual do slide principal da home.
 - Popup de comunicacao agora usa o mesmo formato visual do banner principal, com imagem em bloco unico.
 - Popup de comunicacao voltou a abrir pelo wrapper correto do modal para respeitar a largura limitada.
+- Popup de comunicacao agora usa a imagem como fundo e mantem o texto alinhado a esquerda com botao no tema.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
