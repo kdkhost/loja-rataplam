@@ -9,6 +9,16 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Popup de comunicacao reabilitado
+
+### Corrigido
+- Popup configurado em `/admin/announcement` voltou a abrir no site publico com a estrutura esperada pelo frontend.
+- Layout do popup permaneceu com largura e altura controladas, sem perder o gatilho de abertura.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+- `php -l resources/views/includes/announcement-popup.blade.php` executado com sucesso.
+
 ## 2026-07-05 - Popup de comunicacao restaurado
 
 ### Corrigido

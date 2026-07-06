@@ -18,7 +18,7 @@
         margin: 20px auto;
     }
 
-    .announcement-with-content {
+    #announcement-container.announcement-with-content {
         display: flex;
         width: 100%;
         min-height: 420px;
@@ -28,21 +28,22 @@
         border-radius: 8px;
     }
 
-    .announcement-with-content .left-area {
+    #announcement-container .left-area {
         position: relative;
         flex: 0 0 42%;
         min-height: 420px;
         background: #f5efe3 center center / cover no-repeat;
+        overflow: hidden;
     }
 
-    .announcement-with-content .left-area img {
+    #announcement-container .left-area img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         display: block;
     }
 
-    .announcement-with-content .right-area {
+    #announcement-overlay.right-area {
         flex: 1;
         display: flex;
         flex-direction: column;
@@ -53,7 +54,7 @@
         background: linear-gradient(180deg, #fffaf0 0%, #fff8ea 100%);
     }
 
-    .announcement-with-content .right-area h3 {
+    #announcement-overlay .announcement-title {
         margin: 0;
         color: #111827;
         font-size: clamp(26px, 3vw, 40px);
@@ -61,7 +62,7 @@
         font-weight: 800;
     }
 
-    .announcement-with-content .right-area p {
+    #announcement-overlay .announcement-text {
         margin: 0;
         color: #4b5563;
         font-size: 16px;
@@ -69,12 +70,11 @@
         max-width: 42ch;
     }
 
-    .announcement-with-content .right-area form {
+    #announcement-overlay .announcement-dynamic-content {
         margin-top: 8px;
-        max-width: 420px;
     }
 
-    .announcement-with-content__action {
+    .announcement-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -85,14 +85,24 @@
         background: #f59e0b;
         color: #fff;
         font-weight: 700;
+        border: 0;
         transition: filter .18s ease, transform .18s ease;
     }
 
-    .announcement-with-content__action:hover,
-    .announcement-with-content__action:focus {
+    .announcement-btn:hover,
+    .announcement-btn:focus {
         color: #fff;
         filter: brightness(.98);
         transform: translateY(-1px);
+    }
+
+    #announcement-overlay .input-group {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    #announcement-overlay .form-control {
+        min-height: 44px;
     }
 
     @media (max-width: 991px) {
@@ -100,23 +110,23 @@
             width: min(960px, calc(100vw - 24px));
         }
 
-        .announcement-with-content {
+        #announcement-container.announcement-with-content {
             flex-direction: column;
             min-height: auto;
             max-height: calc(100vh - 32px);
         }
 
-        .announcement-with-content .left-area {
+        #announcement-container .left-area {
             flex: 0 0 auto;
             width: 100%;
             min-height: 260px;
         }
 
-        .announcement-with-content .right-area {
+        #announcement-overlay.right-area {
             padding: 26px 22px 28px;
         }
 
-        .announcement-with-content .right-area p {
+        #announcement-overlay .announcement-text {
             max-width: none;
         }
     }
@@ -127,34 +137,34 @@
             margin: 8px auto;
         }
 
-        .announcement-with-content .left-area {
+        #announcement-container .left-area {
             min-height: 220px;
         }
 
-        .announcement-with-content .right-area {
+        #announcement-overlay.right-area {
             padding: 22px 18px 24px;
         }
 
-        .announcement-with-content .right-area h3 {
+        #announcement-overlay .announcement-title {
             font-size: 24px;
         }
     }
 </style>
 
-<div class="announcement-with-content">
+<div id="announcement-container" class="announcement-with-content">
     <div class="left-area" @if ($announcementImage) style="background-image:url('{{ $announcementImage }}');" @endif>
         @if ($announcementImage)
             <img src="{{ $announcementImage }}" alt="{{ $announcementTitle ?: __('Announcement') }}">
         @endif
     </div>
 
-    <div class="right-area">
+    <div id="announcement-overlay" class="right-area">
         @if ($announcementTitle)
-            <h3>{{ $announcementTitle }}</h3>
+            <h3 class="announcement-title">{{ $announcementTitle }}</h3>
         @endif
 
         @if ($announcementDetails)
-            <p>{{ $announcementDetails }}</p>
+            <p class="announcement-text">{{ $announcementDetails }}</p>
         @endif
 
         @if ($setting->announcement_type === 'newletter')
@@ -167,12 +177,12 @@
                 <div aria-hidden="true">
                     <input type="hidden" name="b_c7103e2c981361a6639545bd5_1194bb7544" tabindex="-1">
                 </div>
-                <button class="btn btn-primary btn-block mt-2" type="submit">
+                <button class="btn btn-primary btn-block mt-2 announcement-btn" type="submit">
                     <span>{{ __('Subscribe') }}</span>
                 </button>
             </form>
         @elseif ($announcementLink)
-            <a href="{{ $announcementLink }}" target="_blank" rel="noopener" class="announcement-with-content__action">
+            <a href="{{ $announcementLink }}" target="_blank" rel="noopener" class="announcement-btn">
                 {{ __('View more') }}
             </a>
         @endif
