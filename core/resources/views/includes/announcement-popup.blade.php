@@ -35,7 +35,7 @@
         content: "";
         position: absolute;
         inset: 0;
-        background: rgba(246, 240, 229, 0.78);
+        /* background: rgba(246, 240, 229, 0.78); */
         z-index: 0;
     }
 
