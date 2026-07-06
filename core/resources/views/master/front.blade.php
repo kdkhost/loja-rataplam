@@ -81,6 +81,66 @@
     @endif
     <style>
         {{ $setting->custom_css }}
+
+        .footer-bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 15px;
+            padding-bottom: 2px;
+            border-top: 1px solid rgb(229 229 229);
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .footer-bottom-bar .footer-copyright {
+            padding: 0;
+            border-top: 0;
+            color: inherit;
+            text-align: left;
+        }
+
+        .footer-developer-credit {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+            margin: 0;
+            color: inherit;
+            text-align: right;
+            white-space: normal;
+        }
+
+        .footer-developer-credit a {
+            color: {{ $setting->primary_color ?: '#ffaa20' }};
+            font-weight: 600;
+            opacity: 1;
+            text-decoration: none;
+            transition: color 0.2s ease, opacity 0.2s ease;
+        }
+
+        .footer-developer-credit a:hover {
+            color: {{ $setting->primary_color ?: '#ffaa20' }};
+            opacity: 0.82;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 767px) {
+            .footer-bottom-bar {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .footer-developer-credit {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                text-align: left;
+            }
+        }
     </style>
     @yield('style')
     {{-- Google AdSense Start --}}
@@ -525,13 +585,15 @@ body_theme4 @endif
                 </div>
             </div>
             <!-- Copyright-->
-            <p class="footer-copyright mb-1"> {{ $setting->copy_right }}</p>
-            <p class="footer-copyright mb-0">
-                Desenvolvido com amor e um coração batendo por
-                <a href="https://kdkhost.com.br" target="_blank" rel="noopener">Marcelo Brad - RJ</a>
-                e
-                <a href="https://ethestrategias.com.br" target="_blank" rel="noopener">Eth Estratégias</a>
-            </p>
+            <div class="footer-bottom-bar">
+                <p class="footer-copyright mb-0">{{ $setting->copy_right }}</p>
+                <p class="footer-developer-credit">
+                    <span>Desenvolvido com amor e um coração batendo por</span>
+                    <a href="https://kdkhost.com.br" target="_blank" rel="noopener">Marcelo Brad - RJ</a>
+                    <span>e</span>
+                    <a href="https://ethestrategias.com.br" target="_blank" rel="noopener">Eth Estratégias</a>
+                </p>
+            </div>
         </div>
     </footer>
 

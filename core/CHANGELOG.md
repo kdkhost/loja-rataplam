@@ -18,6 +18,7 @@ Formato padrao:
 - Popup de comunicacao passou a usar divisao visual fixa, texto completo a esquerda e imagem suavizada no fundo como na referencia aprovada.
 - Sobreposicao clara do fundo do popup de comunicacao foi desativada para exibir a imagem sem camada leitosa global.
 - Login administrativo voltou a carregar o jQuery existente do projeto, evitando asset 404 ao acessar rotas admin sem sessao ativa.
+- Rodape publico passou a exibir direitos reservados a esquerda e creditos de desenvolvimento a direita na mesma linha, com links visiveis no tema claro.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
