@@ -76,13 +76,14 @@
         justify-content: center;
         text-align: center;
         width: fit-content;
-        min-height: 40px;
-        line-height: 1;
-        padding: 0 16px;
-        border-radius: 8px;
+        min-height: 54px;
+        padding: 9px 22px;
+        border-radius: 4px;
         background: {{ $setting->primary_color }};
         color: #fff;
-        font-weight: 700;
+        font-size: 15px;
+        font-style: normal;
+        font-weight: 500 !important;
         border: 0;
         transition: filter .18s ease, transform .18s ease;
     }
@@ -94,18 +95,13 @@
         transform: translateY(-1px);
     }
 
-    .announcement-btn > span {
-        display: block;
-        line-height: 1;
-    }
-
     #announcement-overlay .input-group {
         width: 100%;
         max-width: 320px;
     }
 
     #announcement-overlay .form-control {
-        min-height: 40px;
+        min-height: 54px;
     }
 
     @media (max-width: 991px) {
