@@ -34,7 +34,7 @@
         $mainbs = json_encode($mainbs);
     @endphp
 
-	<script src="{{ asset('assets/back/js/core/jquery.3.2.1.min.js') }}"></script>
+	<script src="{{ asset('assets/back/js/core/jquery.3.6.0.min.js') }}"></script>
 	<script src="{{ asset('assets/back/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js') }}"></script>
 	<script src="{{ asset('assets/back/js/core/popper.min.js') }}"></script>
     <script src="{{ asset('assets/back/js/core/bootstrap.min.js') }}"></script>

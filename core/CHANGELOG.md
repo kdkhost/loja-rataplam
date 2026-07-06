@@ -17,6 +17,7 @@ Formato padrao:
 - Titulo do popup de saida deixou de truncar no desktop e voltou a quebrar linha completa com alinhamento a esquerda.
 - Popup de comunicacao passou a usar divisao visual fixa, texto completo a esquerda e imagem suavizada no fundo como na referencia aprovada.
 - Sobreposicao clara do fundo do popup de comunicacao foi desativada para exibir a imagem sem camada leitosa global.
+- Login administrativo voltou a carregar o jQuery existente do projeto, evitando asset 404 ao acessar rotas admin sem sessao ativa.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
