@@ -678,29 +678,17 @@ body_theme4 @endif
 
                 $exitPopupCoupons = [];
                 $exitPopupProducts = [];
-                $selectedExitCoupon = null;
-                $selectedExitProduct = null;
 
-                if ($exitPopupMode === 'coupon' && !empty($exitPopupCouponIds)) {
+                if (!empty($exitPopupCouponIds)) {
                     $exitPopupCoupons = \App\Models\PromoCode::whereIn('id', $exitPopupCouponIds)
                         ->where('status', 1)
                         ->get();
-                    if ($exitPopupShowRandom && $exitPopupCoupons->count() > 0) {
-                        $selectedExitCoupon = $exitPopupCoupons->random();
-                    } elseif ($exitPopupCoupons->count() > 0) {
-                        $selectedExitCoupon = $exitPopupCoupons->first();
-                    }
                 }
 
-                if ($exitPopupMode === 'product' && !empty($exitPopupProductIds)) {
+                if (!empty($exitPopupProductIds)) {
                     $exitPopupProducts = \App\Models\Item::whereIn('id', $exitPopupProductIds)
                         ->where('status', 1)
                         ->get();
-                    if ($exitPopupShowRandom && $exitPopupProducts->count() > 0) {
-                        $selectedExitProduct = $exitPopupProducts->random();
-                    } elseif ($exitPopupProducts->count() > 0) {
-                        $selectedExitProduct = $exitPopupProducts->first();
-                    }
                 }
             @endphp
             <div class="commerce-popup" id="exit-popup" hidden
@@ -1480,6 +1468,7 @@ body_theme4 @endif
                         var contentEl = popup.querySelector('.exit-popup-content');
                         var actionBtn = popup.querySelector('.exit-popup-action');
                         var actionLabel = actionBtn ? actionBtn.querySelector('span') : null;
+                        var productBaseUrl = '{{ url('/product') }}/';
                         var setActionText = function (value) {
                             if (actionLabel) {
                                 actionLabel.textContent = value;
@@ -1487,17 +1476,99 @@ body_theme4 @endif
                                 actionBtn.textContent = value;
                             }
                         };
+                        var escapeHtml = function (value) {
+                            return String(value || '').replace(/[&<>"']/g, function (char) {
+                                return {
+                                    '&': '&amp;',
+                                    '<': '&lt;',
+                                    '>': '&gt;',
+                                    '"': '&quot;',
+                                    "'": '&#039;'
+                                }[char];
+                            });
+                        };
+                        var randomItem = function (items) {
+                            return items[Math.floor(Math.random() * items.length)];
+                        };
+                        var copyText = function (value, onSuccess) {
+                            if (navigator.clipboard && navigator.clipboard.writeText) {
+                                navigator.clipboard.writeText(value).then(onSuccess);
+                                return;
+                            }
+
+                            var textarea = document.createElement('textarea');
+                            textarea.value = value;
+                            textarea.setAttribute('readonly', 'readonly');
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                            onSuccess();
+                        };
+                        var couponCandidates = coupons.map(function (coupon) {
+                            return { type: 'coupon', item: coupon };
+                        });
+                        var productCandidates = products.map(function (product) {
+                            return { type: 'product', item: product };
+                        });
+                        var allCandidates = couponCandidates.concat(productCandidates);
+                        var selectedCandidate = null;
 
                         if (titleEl) titleEl.textContent = title;
                         if (textEl) textEl.textContent = text;
+                        if (actionBtn) {
+                            actionBtn.style.display = 'inline-flex';
+                            actionBtn.onclick = null;
+                        }
 
-                        var selectedItem = null;
+                        if (showRandom && allCandidates.length > 0) {
+                            selectedCandidate = randomItem(allCandidates);
+                        } else if (mode === 'product' && productCandidates.length > 0) {
+                            selectedCandidate = productCandidates[0];
+                        } else if (mode === 'coupon' && couponCandidates.length > 0) {
+                            selectedCandidate = couponCandidates[0];
+                        } else if (mode === 'mixed' && allCandidates.length > 0) {
+                            selectedCandidate = allCandidates[0];
+                        } else if (couponCandidates.length > 0) {
+                            selectedCandidate = couponCandidates[0];
+                        } else if (productCandidates.length > 0) {
+                            selectedCandidate = productCandidates[0];
+                        }
 
-                        if (mode === 'manual' && manualCoupon) {
-                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + manualCoupon + '</div>';
+                        if (selectedCandidate && selectedCandidate.type === 'coupon') {
+                            var selectedCoupon = selectedCandidate.item;
+                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + escapeHtml(selectedCoupon.code) + '</div>' +
+                                '<small class="text-muted">' + escapeHtml(selectedCoupon.title || 'Cupom selecionado') + (selectedCoupon.discount ? ' - ' + escapeHtml(selectedCoupon.discount) + '% OFF' : '') + '</small>';
+                            setActionText('Copiar codigo');
+                            actionBtn.onclick = function() {
+                                copyText(selectedCoupon.code, function() {
+                                    setActionText('Codigo copiado!');
+                                    setTimeout(function() {
+                                        setActionText('Copiar codigo');
+                                    }, 2000);
+                                });
+                            };
+                        } else if (selectedCandidate && selectedCandidate.type === 'product') {
+                            var selectedProduct = selectedCandidate.item;
+                            var priceHtml = '<strong>' + escapeHtml(selectedProduct.price_display || selectedProduct.price) + '</strong>';
+                            if (selectedProduct.previous_price && parseFloat(selectedProduct.previous_price) > parseFloat(selectedProduct.price)) {
+                                priceHtml = '<span>' + escapeHtml(selectedProduct.previous_price_display || selectedProduct.previous_price) + '</span>' + priceHtml;
+                            }
+                            contentEl.innerHTML = '<div class="commerce-popup__product">' +
+                                '<h4>' + escapeHtml(selectedProduct.name) + '</h4>' +
+                                '<div class="commerce-popup__price">' + priceHtml + '</div>' +
+                                '</div>';
+                            setActionText('Ir ate o produto');
+                            actionBtn.onclick = function() {
+                                window.location.href = productBaseUrl + selectedProduct.slug;
+                            };
+                        } else if (manualCoupon) {
+                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + escapeHtml(manualCoupon) + '</div>';
                             setActionText(buttonText || 'Usar desconto');
                             actionBtn.onclick = function() {
-                                navigator.clipboard.writeText(manualCoupon).then(function() {
+                                copyText(manualCoupon, function() {
                                     setActionText('Copiado!');
                                     setTimeout(function() {
                                         setActionText(buttonText || 'Usar desconto');
@@ -1509,33 +1580,6 @@ body_theme4 @endif
                                     window.location.href = link;
                                 };
                             }
-                        } else if (mode === 'coupon' && coupons.length > 0) {
-                            selectedItem = showRandom ? coupons[Math.floor(Math.random() * coupons.length)] : coupons[0];
-                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + selectedItem.code + '</div>' +
-                                '<small class="text-muted">Desconto de ' + selectedItem.discount + '% - ' + selectedItem.title + '</small>';
-                            setActionText('Pegar cupom');
-                            actionBtn.onclick = function() {
-                                navigator.clipboard.writeText(selectedItem.code).then(function() {
-                                    setActionText('Copiado!');
-                                    setTimeout(function() {
-                                        setActionText('Pegar cupom');
-                                    }, 2000);
-                                });
-                            };
-                        } else if (mode === 'product' && products.length > 0) {
-                            selectedItem = showRandom ? products[Math.floor(Math.random() * products.length)] : products[0];
-                            var priceHtml = '<strong>' + (selectedItem.price_display || selectedItem.price) + '</strong>';
-                            if (selectedItem.previous_price && parseFloat(selectedItem.previous_price) > parseFloat(selectedItem.price)) {
-                                priceHtml = '<span>' + (selectedItem.previous_price_display || selectedItem.previous_price) + '</span>' + priceHtml;
-                            }
-                            contentEl.innerHTML = '<div class="commerce-popup__product">' +
-                                '<h4>' + selectedItem.name + '</h4>' +
-                                '<div class="commerce-popup__price">' + priceHtml + '</div>' +
-                                '</div>';
-                            setActionText('Ir para o produto');
-                            actionBtn.onclick = function() {
-                                window.location.href = '/product/' + selectedItem.slug;
-                            };
                         } else {
                             actionBtn.style.display = 'none';
                         }

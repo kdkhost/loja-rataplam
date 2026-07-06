@@ -281,7 +281,7 @@ class PlatformController extends Controller
             'exit_popup_coupon' => 'nullable|max:100',
             'exit_popup_button_text' => 'nullable|max:255',
             'exit_popup_link' => 'nullable|max:255',
-            'exit_popup_mode' => 'nullable|in:manual,coupon,product',
+            'exit_popup_mode' => 'nullable|in:manual,coupon,product,mixed',
             'exit_popup_coupon_ids' => 'nullable|array',
             'exit_popup_coupon_ids.*' => 'nullable|exists:promo_codes,id',
             'exit_popup_product_ids' => 'nullable|array',
@@ -319,17 +319,8 @@ class PlatformController extends Controller
             $data['promo_popup_item_id'] = null;
         }
 
-        if ($data['exit_popup_mode'] !== 'coupon') {
-            $data['exit_popup_coupon_ids'] = null;
-        } else {
-            $data['exit_popup_coupon_ids'] = json_encode($request->input('exit_popup_coupon_ids', []));
-        }
-
-        if ($data['exit_popup_mode'] !== 'product') {
-            $data['exit_popup_product_ids'] = null;
-        } else {
-            $data['exit_popup_product_ids'] = json_encode($request->input('exit_popup_product_ids', []));
-        }
+        $data['exit_popup_coupon_ids'] = json_encode(array_values($request->input('exit_popup_coupon_ids', [])));
+        $data['exit_popup_product_ids'] = json_encode(array_values($request->input('exit_popup_product_ids', [])));
 
         if ($file = $request->file('promo_popup_image')) {
             $data['promo_popup_image'] = ImageHelper::handleUpdatedUploadedImage($file, 'images', $setting, 'images/', 'promo_popup_image');

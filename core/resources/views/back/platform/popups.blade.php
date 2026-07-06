@@ -37,7 +37,7 @@
                                 <option value="">Selecionar produto</option>
                                 @foreach ($items as $item)
                                     <option value="{{ $item->id }}" {{ (int) $setting->promo_popup_item_id === (int) $item->id ? 'selected' : '' }}>
-                                        {{ $item->name }} - {{ \App\Helpers\PriceHelper::setPrice($item->discount_price) }}
+                                        {{ $item->name }} - {{ \App\Helpers\PriceHelper::setCurrencyPrice($item->discount_price) }}
                                     </option>
                                 @endforeach
                             </select>
@@ -125,6 +125,7 @@
                                 <option value="manual" {{ $setting->exit_popup_mode == 'manual' ? 'selected' : '' }}>Manual</option>
                                 <option value="coupon" {{ $setting->exit_popup_mode == 'coupon' ? 'selected' : '' }}>Cupom de desconto</option>
                                 <option value="product" {{ $setting->exit_popup_mode == 'product' ? 'selected' : '' }}>Produto em promoção</option>
+                                <option value="mixed" {{ $setting->exit_popup_mode == 'mixed' ? 'selected' : '' }}>Cupom + produto</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -137,8 +138,8 @@
                         </div>
                         <div class="form-group">
                             <label>Cupom/desconto (manual)</label>
-                            <input type="text" name="exit_popup_coupon" class="form-control" value="{{ $setting->exit_popup_coupon }}" placeholder="Use este campo no modo manual ou será preenchido automaticamente no modo cupom" readonly>
-                            <small class="text-muted">No modo cupom, este campo será preenchido automaticamente com o código do cupom selecionado</small>
+                            <input type="text" name="exit_popup_coupon" class="form-control" value="{{ $setting->exit_popup_coupon }}" placeholder="Use este campo como fallback manual">
+                            <small class="text-muted">Usado quando nenhum cupom ou produto selecionado estiver disponivel no popup de saida.</small>
                         </div>
                         <div class="form-group">
                             <label>Cupons disponíveis (modo cupom)</label>
@@ -151,7 +152,7 @@
                                     @endforeach
                                 @endif
                             </select>
-                            <small class="text-muted">Selecione múltiplos cupons para exibir aleatoriamente</small>
+                            <small class="text-muted">Selecione um ou mais cupons. Com "Mostrar aleatoriamente" ativo, um cupom sera escolhido por abertura.</small>
                         </div>
                         <div class="form-group">
                             <label>Produtos em promoção (modo produto)</label>
@@ -162,7 +163,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Selecione múltiplos produtos para exibir aleatoriamente</small>
+                            <small class="text-muted">Selecione um ou mais produtos. Com "Mostrar aleatoriamente" ativo, um produto sera escolhido por abertura.</small>
                         </div>
                         <div class="form-group">
                             <label class="switch-primary">
@@ -170,7 +171,7 @@
                                 <span class="switch-body"></span>
                                 <span class="switch-text">Mostrar aleatoriamente</span>
                             </label>
-                            <small class="text-muted d-block">Quando ativado, exibe um cupom ou produto aleatório da lista selecionada</small>
+                            <small class="text-muted d-block">Quando ativado, sorteia entre todos os cupons e produtos selecionados e ajusta o CTA automaticamente.</small>
                         </div>
                         <div class="form-group">
                             <label>Texto do botão</label>
@@ -191,38 +192,4 @@
     </form>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const modeSelect = document.querySelector('select[name="exit_popup_mode"]');
-    const couponIdsSelect = document.getElementById('exit-popup-coupon-ids');
-    const manualCouponInput = document.querySelector('input[name="exit_popup_coupon"]');
-
-    function updateManualCouponField() {
-        if (modeSelect && couponIdsSelect && manualCouponInput) {
-            if (modeSelect.value === 'coupon') {
-                manualCouponInput.readOnly = true;
-                const selectedOptions = Array.from(couponIdsSelect.selectedOptions);
-                if (selectedOptions.length > 0) {
-                    const couponCodes = selectedOptions.map(opt => opt.getAttribute('data-coupon-code')).join(', ');
-                    manualCouponInput.value = couponCodes;
-                } else {
-                    manualCouponInput.value = '';
-                }
-            } else {
-                manualCouponInput.readOnly = false;
-            }
-        }
-    }
-
-    if (modeSelect) {
-        modeSelect.addEventListener('change', updateManualCouponField);
-    }
-
-    if (couponIdsSelect) {
-        couponIdsSelect.addEventListener('change', updateManualCouponField);
-    }
-
-    updateManualCouponField();
-});
-</script>
 @endsection
