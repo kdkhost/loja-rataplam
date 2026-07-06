@@ -12,7 +12,11 @@ Formato padrao:
 ## 2026-07-06 - Ajuste final do popup de saida
 
 ### Adicionado
+- Catalogo da loja passou a ter categorias principais Masculina, Feminina e Unisex, com as categorias ativas anteriores reorganizadas como subcategorias.
 - Banners da home receberam opcao no painel para ocultar o texto sobre a imagem sem remover o clique do banner.
+
+### Banco de dados
+- Adicionada migration idempotente para criar as categorias por genero, remapear produtos, desativar as categorias antigas de tipo e atualizar blocos de categorias da home.
 
 ### Corrigido
 - Popup de saida manteve a selecao conjunta de cupons e produtos, mas o fallback manual deixou de sobrescrever a copia do cupom.
