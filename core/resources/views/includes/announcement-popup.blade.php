@@ -13,16 +13,16 @@
 
 <style>
     .white-popup {
-        width: min(1080px, calc(100vw - 32px));
-        max-width: 1080px;
-        margin: 20px auto;
+        width: min(920px, calc(100vw - 24px));
+        max-width: 920px;
+        margin: 14px auto;
     }
 
     #announcement-container.announcement-with-content {
         display: flex;
         width: 100%;
-        min-height: 420px;
-        max-height: calc(100vh - 56px);
+        min-height: 360px;
+        max-height: calc(100vh - 36px);
         background: #fff;
         overflow: hidden;
         border-radius: 8px;
@@ -30,8 +30,8 @@
 
     #announcement-container .left-area {
         position: relative;
-        flex: 0 0 42%;
-        min-height: 420px;
+        flex: 0 0 40%;
+        min-height: 360px;
         background: #f5efe3 center center / cover no-repeat;
         overflow: hidden;
     }
@@ -48,8 +48,8 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 14px;
-        padding: clamp(28px, 4vw, 56px);
+        gap: 12px;
+        padding: clamp(22px, 3vw, 36px);
         overflow: auto;
         background: linear-gradient(180deg, #fffaf0 0%, #fff8ea 100%);
     }
@@ -57,7 +57,7 @@
     #announcement-overlay .announcement-title {
         margin: 0;
         color: #111827;
-        font-size: clamp(26px, 3vw, 40px);
+        font-size: clamp(24px, 2.4vw, 32px);
         line-height: 1.1;
         font-weight: 800;
     }
@@ -79,8 +79,8 @@
         align-items: center;
         justify-content: center;
         width: fit-content;
-        min-height: 44px;
-        padding: 0 18px;
+        min-height: 40px;
+        padding: 0 16px;
         border-radius: 8px;
         background: #f59e0b;
         color: #fff;
@@ -98,32 +98,32 @@
 
     #announcement-overlay .input-group {
         width: 100%;
-        max-width: 420px;
+        max-width: 360px;
     }
 
     #announcement-overlay .form-control {
-        min-height: 44px;
+        min-height: 40px;
     }
 
     @media (max-width: 991px) {
         .white-popup {
-            width: min(960px, calc(100vw - 24px));
+            width: min(860px, calc(100vw - 20px));
         }
 
         #announcement-container.announcement-with-content {
             flex-direction: column;
             min-height: auto;
-            max-height: calc(100vh - 32px);
+            max-height: calc(100vh - 24px);
         }
 
         #announcement-container .left-area {
             flex: 0 0 auto;
             width: 100%;
-            min-height: 260px;
+            min-height: 240px;
         }
 
         #announcement-overlay.right-area {
-            padding: 26px 22px 28px;
+            padding: 22px 20px 24px;
         }
 
         #announcement-overlay .announcement-text {
@@ -133,20 +133,20 @@
 
     @media (max-width: 575px) {
         .white-popup {
-            width: calc(100vw - 16px);
+            width: calc(100vw - 12px);
             margin: 8px auto;
         }
 
         #announcement-container .left-area {
-            min-height: 220px;
+            min-height: 200px;
         }
 
         #announcement-overlay.right-area {
-            padding: 22px 18px 24px;
+            padding: 18px 16px 20px;
         }
 
         #announcement-overlay .announcement-title {
-            font-size: 24px;
+            font-size: 22px;
         }
     }
 </style>

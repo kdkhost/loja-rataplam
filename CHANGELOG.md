@@ -9,6 +9,15 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Reducao do popup de comunicacao
+
+### Corrigido
+- Popup de comunicacao foi reduzido para um tamanho mais contido no desktop e no mobile, sem alterar o gatilho de abertura.
+- Espacamentos internos e altura minima foram ajustados para ficar mais proximo do padrao aprovado.
+
+### Validacao
+- `php artisan view:cache` executado com sucesso.
+
 ## 2026-07-05 - Popup de comunicacao reabilitado
 
 ### Corrigido
