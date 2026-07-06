@@ -8,6 +8,7 @@
 
             const COOKIE_VALUE = 1;
             const COOKIE_DOMAIN = '{{ config('session.domain') ?? request()->getHost() }}';
+            document.body.classList.add('cookie-consent-active');
 
             function consentWithCookies() {
                 setCookie('{{ $cookieConsentConfig['cookie_name'] }}', COOKIE_VALUE, {{ $cookieConsentConfig['cookie_lifetime'] }});
@@ -24,6 +25,8 @@
                 for (let i = 0; i < dialogs.length; ++i) {
                     dialogs[i].style.display = 'none';
                 }
+
+                document.body.classList.remove('cookie-consent-active');
             }
 
             function setCookie(name, value, expirationInDays) {
