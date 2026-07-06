@@ -128,6 +128,33 @@
             text-decoration: underline;
         }
 
+        .footer-heart {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: {{ $setting->primary_color ?: '#ffaa20' }};
+            font-size: 15px;
+            line-height: 1;
+            transform-origin: center;
+            animation: footer-heartbeat 1.15s ease-in-out infinite;
+        }
+
+        @keyframes footer-heartbeat {
+            0%,
+            38%,
+            100% {
+                transform: scale(1);
+            }
+
+            14% {
+                transform: scale(1.22);
+            }
+
+            24% {
+                transform: scale(0.96);
+            }
+        }
+
         @media (max-width: 767px) {
             .footer-bottom-bar {
                 align-items: flex-start;
@@ -588,7 +615,9 @@ body_theme4 @endif
             <div class="footer-bottom-bar">
                 <p class="footer-copyright mb-0">{{ $setting->copy_right }}</p>
                 <p class="footer-developer-credit">
-                    <span>Desenvolvido com amor e um coração batendo por</span>
+                    <span>Desenvolvido com amor</span>
+                    <span class="footer-heart" role="img" aria-label="coração batendo">&#10084;</span>
+                    <span>por</span>
                     <a href="https://kdkhost.com.br" target="_blank" rel="noopener">Marcelo Brad - RJ</a>
                     <span>e</span>
                     <a href="https://ethestrategias.com.br" target="_blank" rel="noopener">Eth Estratégias</a>

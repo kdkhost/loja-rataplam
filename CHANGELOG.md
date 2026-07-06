@@ -19,6 +19,7 @@ Formato padrao:
 - Sobreposicao clara do fundo do popup de comunicacao foi desativada para exibir a imagem sem camada leitosa global.
 - Login administrativo voltou a carregar o jQuery existente do projeto, evitando asset 404 ao acessar rotas admin sem sessao ativa.
 - Rodape publico passou a exibir direitos reservados a esquerda e creditos de desenvolvimento a direita na mesma linha, com links visiveis no tema claro.
+- Credito de desenvolvimento do rodape trocou o texto "coração batendo" por um coração animado visualmente.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
