@@ -12,6 +12,7 @@ Formato padrao:
 ## 2026-07-05 - Reducao do popup de comunicacao
 
 ### Corrigido
+- Botoes dos popups promocional, PWA e conteudos dinamicos agora seguem a estrutura do tema com `span`, mantendo o texto visivel no hover.
 - Precos dos popups promocional e de saida agora usam mascara brasileira com moeda, centavos e separador decimal correto.
 - Migration do texto do botao do popup de comunicacao ficou segura contra coluna duplicada e bases antigas.
 - Botao do popup de saida passou a usar a mesma estrutura com `span` dos botoes do tema, corrigindo o hover sem texto.

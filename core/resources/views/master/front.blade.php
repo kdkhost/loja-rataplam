@@ -606,7 +606,7 @@ body_theme4 @endif
                 <h3>{{ $setting->pwa_install_popup_title ?: 'Instale nosso aplicativo' }}</h3>
                 <p>{{ $setting->pwa_install_popup_text ?: 'Acesse mais rápido e use o site como aplicativo no seu celular.' }}</p>
                 <div class="pwa-install-popup__actions">
-                    <button type="button" class="btn btn-primary" id="pwa-install-confirm">{{ $setting->pwa_install_popup_button_text ?: 'Instalar agora' }}</button>
+                    <button type="button" class="btn btn-primary" id="pwa-install-confirm"><span>{{ $setting->pwa_install_popup_button_text ?: 'Instalar agora' }}</span></button>
                     <button type="button" class="btn btn-link" id="pwa-install-later">{{ $setting->pwa_install_popup_later_text ?: 'Agora não' }}</button>
                 </div>
             </div>
@@ -664,7 +664,7 @@ body_theme4 @endif
                         </div>
                     @endif
                     @if ($promoPopupLink)
-                        <a class="btn btn-primary" href="{{ $promoPopupLink }}">{{ $setting->promo_popup_button_text ?: 'Ver oferta' }}</a>
+                        <a class="btn btn-primary" href="{{ $promoPopupLink }}"><span>{{ $setting->promo_popup_button_text ?: 'Ver oferta' }}</span></a>
                     @endif
                 </div>
             </div>
@@ -1152,13 +1152,14 @@ body_theme4 @endif
                         // Add copy button
                         var copyBtn = document.createElement('button');
                         copyBtn.className = 'btn btn-primary';
-                        copyBtn.textContent = 'Pegar cupom';
+                        copyBtn.innerHTML = '<span>Pegar cupom</span>';
+                        var copyBtnLabel = copyBtn.querySelector('span');
                         copyBtn.style.marginTop = '12px';
                         copyBtn.onclick = function() {
                             navigator.clipboard.writeText(selectedItem.code).then(function() {
-                                copyBtn.textContent = 'Copiado!';
+                                copyBtnLabel.textContent = 'Copiado!';
                                 setTimeout(function() {
-                                    copyBtn.textContent = 'Pegar cupom';
+                                    copyBtnLabel.textContent = 'Pegar cupom';
                                 }, 2000);
                             });
                         };
@@ -1194,7 +1195,7 @@ body_theme4 @endif
                         // Add product link button
                         var productBtn = document.createElement('button');
                         productBtn.className = 'btn btn-primary';
-                        productBtn.textContent = 'Ir para o produto';
+                        productBtn.innerHTML = '<span>Ir para o produto</span>';
                         productBtn.style.marginTop = '12px';
                         productBtn.onclick = function() {
                             window.location.href = '/product/' + selectedItem.slug;
