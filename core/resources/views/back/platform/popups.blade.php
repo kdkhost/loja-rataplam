@@ -120,6 +120,14 @@
                             </label>
                         </div>
                         <div class="form-group">
+                            <label>Tipo de popup</label>
+                            <select name="exit_popup_mode" class="form-control">
+                                <option value="manual" {{ $setting->exit_popup_mode == 'manual' ? 'selected' : '' }}>Manual</option>
+                                <option value="coupon" {{ $setting->exit_popup_mode == 'coupon' ? 'selected' : '' }}>Cupom de desconto</option>
+                                <option value="product" {{ $setting->exit_popup_mode == 'product' ? 'selected' : '' }}>Produto em promoção</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
                             <label>Título</label>
                             <input type="text" name="exit_popup_title" class="form-control" value="{{ $setting->exit_popup_title }}">
                         </div>
@@ -128,8 +136,41 @@
                             <textarea name="exit_popup_text" class="form-control" rows="4">{{ $setting->exit_popup_text }}</textarea>
                         </div>
                         <div class="form-group">
-                            <label>Cupom/desconto</label>
-                            <input type="text" name="exit_popup_coupon" class="form-control" value="{{ $setting->exit_popup_coupon }}">
+                            <label>Cupom/desconto (manual)</label>
+                            <input type="text" name="exit_popup_coupon" class="form-control" value="{{ $setting->exit_popup_coupon }}" placeholder="Use este campo no modo manual ou será preenchido automaticamente no modo cupom" readonly>
+                            <small class="text-muted">No modo cupom, este campo será preenchido automaticamente com o código do cupom selecionado</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Cupons disponíveis (modo cupom)</label>
+                            <select name="exit_popup_coupon_ids[]" class="form-control select2" multiple="multiple" id="exit-popup-coupon-ids">
+                                @if(isset($promoCodes))
+                                    @foreach ($promoCodes as $promoCode)
+                                        <option value="{{ $promoCode->id }}" data-coupon-code="{{ $promoCode->code_name }}" {{ in_array($promoCode->id, json_decode($setting->exit_popup_coupon_ids ?? '[]', true) ?: []) ? 'selected' : '' }}>
+                                            {{ $promoCode->title }} - {{ $promoCode->code_name }} ({{ $promoCode->discount }}%)
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <small class="text-muted">Selecione múltiplos cupons para exibir aleatoriamente</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Produtos em promoção (modo produto)</label>
+                            <select name="exit_popup_product_ids[]" class="form-control select2" multiple="multiple">
+                                @foreach ($items as $item)
+                                    <option value="{{ $item->id }}" {{ in_array($item->id, json_decode($setting->exit_popup_product_ids ?? '[]', true) ?: []) ? 'selected' : '' }}>
+                                        {{ $item->name }} - {{ \App\Helpers\PriceHelper::setPrice($item->discount_price) }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Selecione múltiplos produtos para exibir aleatoriamente</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="switch-primary">
+                                <input type="checkbox" class="switch switch-bootstrap" name="exit_popup_show_random" value="1" {{ ($setting->exit_popup_show_random ?? false) ? 'checked' : '' }}>
+                                <span class="switch-body"></span>
+                                <span class="switch-text">Mostrar aleatoriamente</span>
+                            </label>
+                            <small class="text-muted d-block">Quando ativado, exibe um cupom ou produto aleatório da lista selecionada</small>
                         </div>
                         <div class="form-group">
                             <label>Texto do botão</label>
@@ -149,4 +190,39 @@
         </div>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modeSelect = document.querySelector('select[name="exit_popup_mode"]');
+    const couponIdsSelect = document.getElementById('exit-popup-coupon-ids');
+    const manualCouponInput = document.querySelector('input[name="exit_popup_coupon"]');
+
+    function updateManualCouponField() {
+        if (modeSelect && couponIdsSelect && manualCouponInput) {
+            if (modeSelect.value === 'coupon') {
+                manualCouponInput.readOnly = true;
+                const selectedOptions = Array.from(couponIdsSelect.selectedOptions);
+                if (selectedOptions.length > 0) {
+                    const couponCodes = selectedOptions.map(opt => opt.getAttribute('data-coupon-code')).join(', ');
+                    manualCouponInput.value = couponCodes;
+                } else {
+                    manualCouponInput.value = '';
+                }
+            } else {
+                manualCouponInput.readOnly = false;
+            }
+        }
+    }
+
+    if (modeSelect) {
+        modeSelect.addEventListener('change', updateManualCouponField);
+    }
+
+    if (couponIdsSelect) {
+        couponIdsSelect.addEventListener('change', updateManualCouponField);
+    }
+
+    updateManualCouponField();
+});
+</script>
 @endsection

@@ -21,6 +21,82 @@ class SettingRepository
         $data = Setting::find(1);
         $input = $request->all();
 
+        // Process announcement date fields
+        if (isset($input['announcement_starts_at']) && !empty($input['announcement_starts_at'])) {
+            $input['announcement_starts_at'] = $input['announcement_starts_at'];
+        } else {
+            unset($input['announcement_starts_at']);
+        }
+
+        if (isset($input['announcement_ends_at']) && !empty($input['announcement_ends_at'])) {
+            $input['announcement_ends_at'] = $input['announcement_ends_at'];
+        } else {
+            unset($input['announcement_ends_at']);
+        }
+
+        // Process exit popup date fields
+        if (isset($input['exit_popup_starts_at']) && !empty($input['exit_popup_starts_at'])) {
+            $input['exit_popup_starts_at'] = $input['exit_popup_starts_at'];
+        } else {
+            unset($input['exit_popup_starts_at']);
+        }
+
+        if (isset($input['exit_popup_ends_at']) && !empty($input['exit_popup_ends_at'])) {
+            $input['exit_popup_ends_at'] = $input['exit_popup_ends_at'];
+        } else {
+            unset($input['exit_popup_ends_at']);
+        }
+
+        // Process announcement mode and related fields
+        if (isset($input['announcement_mode'])) {
+            $input['announcement_mode'] = $input['announcement_mode'];
+        } else {
+            $input['announcement_mode'] = 'manual';
+        }
+
+        if (isset($input['announcement_coupon_ids']) && is_array($input['announcement_coupon_ids'])) {
+            $input['announcement_coupon_ids'] = json_encode($input['announcement_coupon_ids']);
+        } else {
+            unset($input['announcement_coupon_ids']);
+        }
+
+        if (isset($input['announcement_product_ids']) && is_array($input['announcement_product_ids'])) {
+            $input['announcement_product_ids'] = json_encode($input['announcement_product_ids']);
+        } else {
+            unset($input['announcement_product_ids']);
+        }
+
+        if (isset($input['announcement_show_random'])) {
+            $input['announcement_show_random'] = 1;
+        } else {
+            $input['announcement_show_random'] = 0;
+        }
+
+        // Process exit popup mode and related fields
+        if (isset($input['exit_popup_mode'])) {
+            $input['exit_popup_mode'] = $input['exit_popup_mode'];
+        } else {
+            $input['exit_popup_mode'] = 'manual';
+        }
+
+        if (isset($input['exit_popup_coupon_ids']) && is_array($input['exit_popup_coupon_ids'])) {
+            $input['exit_popup_coupon_ids'] = json_encode($input['exit_popup_coupon_ids']);
+        } else {
+            unset($input['exit_popup_coupon_ids']);
+        }
+
+        if (isset($input['exit_popup_product_ids']) && is_array($input['exit_popup_product_ids'])) {
+            $input['exit_popup_product_ids'] = json_encode($input['exit_popup_product_ids']);
+        } else {
+            unset($input['exit_popup_product_ids']);
+        }
+
+        if (isset($input['exit_popup_show_random'])) {
+            $input['exit_popup_show_random'] = 1;
+        } else {
+            $input['exit_popup_show_random'] = 0;
+        }
+
         $image_files = ['logo', 'favicon', 'loader', 'feature_image', 'announcement', 'footer_gateway_img', 'maintainance_image', 'meta_image', 'pwa_icon'];
 
         $social_fields = ['facebook_check', 'google_check'];

@@ -26,6 +26,8 @@ Formato padrao:
 - Texto do botao do popup passou a ser configuravel pelo painel de anuncios.
 - O painel de anuncios passou a usar fallback seguro para o novo campo em bases antigas.
 - Titulo do popup foi ajustado para permanecer em uma linha e o mobile recebeu largura responsiva mais consistente.
+- Configuracoes pendentes de cupom, produto, agendamento e exibicao aleatoria dos popups foram consolidadas no admin.
+- Arquivos temporarios locais com cache/depuracao nao foram publicados por conterem dados de ambiente.
 
 ### Validacao
 - `php artisan migrate` executado para aplicar `announcement_button_text` na tabela `settings`.

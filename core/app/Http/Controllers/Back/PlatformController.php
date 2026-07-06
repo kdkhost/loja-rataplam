@@ -8,6 +8,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\InternalCronTask;
 use App\Models\Item;
+use App\Models\PromoCode;
 use App\Models\Setting;
 use App\Services\CorreiosService;
 use App\Services\Cron\InternalCronRegistry;
@@ -256,8 +257,9 @@ class PlatformController extends Controller
     {
         $this->ensureSection('Promotional Popups');
         $items = Item::whereStatus(1)->orderBy('name')->select('id', 'name', 'discount_price', 'previous_price')->get();
+        $promoCodes = PromoCode::whereStatus(1)->orderBy('title')->get();
 
-        return view('back.platform.popups', compact('items'));
+        return view('back.platform.popups', compact('items', 'promoCodes'));
     }
 
     public function updatePopups(Request $request)
@@ -279,6 +281,11 @@ class PlatformController extends Controller
             'exit_popup_coupon' => 'nullable|max:100',
             'exit_popup_button_text' => 'nullable|max:255',
             'exit_popup_link' => 'nullable|max:255',
+            'exit_popup_mode' => 'nullable|in:manual,coupon,product',
+            'exit_popup_coupon_ids' => 'nullable|array',
+            'exit_popup_coupon_ids.*' => 'nullable|exists:promo_codes,id',
+            'exit_popup_product_ids' => 'nullable|array',
+            'exit_popup_product_ids.*' => 'nullable|exists:items,id',
         ]);
 
         $setting = Setting::findOrFail(1);
@@ -299,14 +306,29 @@ class PlatformController extends Controller
             'exit_popup_coupon',
             'exit_popup_button_text',
             'exit_popup_link',
+            'exit_popup_mode',
         ]);
         $data['promo_popup_enabled'] = $request->has('promo_popup_enabled') ? 1 : 0;
         $data['exit_popup_enabled'] = $request->has('exit_popup_enabled') ? 1 : 0;
         $data['promo_popup_delay'] = $data['promo_popup_delay'] ?? 3;
         $data['promo_popup_mode'] = $data['promo_popup_mode'] ?? 'manual';
+        $data['exit_popup_mode'] = $data['exit_popup_mode'] ?? 'manual';
+        $data['exit_popup_show_random'] = $request->has('exit_popup_show_random') ? 1 : 0;
 
         if ($data['promo_popup_mode'] !== 'product') {
             $data['promo_popup_item_id'] = null;
+        }
+
+        if ($data['exit_popup_mode'] !== 'coupon') {
+            $data['exit_popup_coupon_ids'] = null;
+        } else {
+            $data['exit_popup_coupon_ids'] = json_encode($request->input('exit_popup_coupon_ids', []));
+        }
+
+        if ($data['exit_popup_mode'] !== 'product') {
+            $data['exit_popup_product_ids'] = null;
+        } else {
+            $data['exit_popup_product_ids'] = json_encode($request->input('exit_popup_product_ids', []));
         }
 
         if ($file = $request->file('promo_popup_image')) {

@@ -162,7 +162,9 @@ class SettingController extends Controller
 
 
     public function announcement(){
-        return view('back.settings.announcement');
+        $items = \App\Models\Item::whereStatus(1)->orderBy('name')->select('id', 'name', 'discount_price', 'previous_price')->get();
+        $promoCodes = \App\Models\PromoCode::whereStatus(1)->orderBy('title')->get();
+        return view('back.settings.announcement', compact('items', 'promoCodes'));
     }
 
     public function cookie(){
