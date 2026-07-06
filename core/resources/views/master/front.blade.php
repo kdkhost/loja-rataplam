@@ -719,13 +719,13 @@ body_theme4 @endif
                     <h3 class="exit-popup-title"></h3>
                     <p class="exit-popup-text"></p>
                     <div class="exit-popup-content"></div>
-                    <button class="btn btn-primary exit-popup-action"></button>
+                    <button class="btn btn-primary exit-popup-action"><span></span></button>
                 </div>
             </div>
         @endif
         <style>
             .commerce-popup-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.52);z-index:1060}.commerce-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1061;width:min(520px,calc(100% - 32px));background:#fff;border-radius:8px;box-shadow:0 28px 80px rgba(17,24,39,.28);overflow:hidden}
-            .commerce-popup img{width:100%;max-height:260px;object-fit:cover}.commerce-popup__body{padding:28px;text-align:center}.commerce-popup__body h3{margin:0 0 12px}.commerce-popup__body p{color:#6b7280}.commerce-popup__close{position:absolute;right:10px;top:10px;border:0;background:#fff;color:#111827;width:34px;height:34px;border-radius:50%;font-size:24px;line-height:1;box-shadow:0 6px 18px rgba(17,24,39,.16)}.commerce-popup__coupon{display:inline-block;margin:8px 0 18px;padding:10px 18px;border:1px dashed #177dff;border-radius:6px;color:#177dff;font-weight:700;letter-spacing:.08em}.commerce-popup__badge{display:inline-block;margin-bottom:12px;padding:7px 12px;border-radius:4px;background:#111827;color:#fff;font-size:12px;font-weight:700;letter-spacing:.08em}.commerce-popup__price{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px}.commerce-popup__price span{text-decoration:line-through;color:#9ca3af}.commerce-popup__price strong{font-size:24px;color:#177dff}.commerce-popup-countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.commerce-popup-countdown div{border:1px solid #e5e7eb;border-radius:6px;padding:8px 4px}.commerce-popup-countdown strong{display:block;color:#111827;font-size:20px}.commerce-popup-countdown small{color:#6b7280;text-transform:uppercase;font-size:10px}.commerce-popup__product{margin:16px 0;padding:16px;background:#f9fafb;border-radius:6px}.commerce-popup__product h4{margin:0 0 8px;font-size:16px;color:#111827}.commerce-popup .btn-primary{display:inline-block;padding:12px 24px;background:#177dff;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;border:none;cursor:pointer;transition:background-color .3s ease,color .3s ease}.commerce-popup .btn-primary:hover{background:#0d6efd;color:#fff}
+            .commerce-popup img{width:100%;max-height:260px;object-fit:cover}.commerce-popup__body{padding:28px;text-align:center}.commerce-popup__body h3{margin:0 0 12px}.commerce-popup__body p{color:#6b7280}.commerce-popup__close{position:absolute;right:10px;top:10px;border:0;background:#fff;color:#111827;width:34px;height:34px;border-radius:50%;font-size:24px;line-height:1;box-shadow:0 6px 18px rgba(17,24,39,.16)}.commerce-popup__coupon{display:inline-block;margin:8px 0 18px;padding:10px 18px;border:1px dashed #177dff;border-radius:6px;color:#177dff;font-weight:700;letter-spacing:.08em}.commerce-popup__badge{display:inline-block;margin-bottom:12px;padding:7px 12px;border-radius:4px;background:#111827;color:#fff;font-size:12px;font-weight:700;letter-spacing:.08em}.commerce-popup__price{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px}.commerce-popup__price span{text-decoration:line-through;color:#9ca3af}.commerce-popup__price strong{font-size:24px;color:#177dff}.commerce-popup-countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.commerce-popup-countdown div{border:1px solid #e5e7eb;border-radius:6px;padding:8px 4px}.commerce-popup-countdown strong{display:block;color:#111827;font-size:20px}.commerce-popup-countdown small{color:#6b7280;text-transform:uppercase;font-size:10px}.commerce-popup__product{margin:16px 0;padding:16px;background:#f9fafb;border-radius:6px}.commerce-popup__product h4{margin:0 0 8px;font-size:16px;color:#111827}.commerce-popup .btn-primary{display:inline-block;color:#fff;text-decoration:none;border:none;cursor:pointer}.commerce-popup .btn-primary:hover{color:#fff}
         </style>
     @endif
 
@@ -1476,6 +1476,14 @@ body_theme4 @endif
                         var textEl = popup.querySelector('.exit-popup-text');
                         var contentEl = popup.querySelector('.exit-popup-content');
                         var actionBtn = popup.querySelector('.exit-popup-action');
+                        var actionLabel = actionBtn ? actionBtn.querySelector('span') : null;
+                        var setActionText = function (value) {
+                            if (actionLabel) {
+                                actionLabel.textContent = value;
+                            } else if (actionBtn) {
+                                actionBtn.textContent = value;
+                            }
+                        };
 
                         if (titleEl) titleEl.textContent = title;
                         if (textEl) textEl.textContent = text;
@@ -1484,12 +1492,12 @@ body_theme4 @endif
 
                         if (mode === 'manual' && manualCoupon) {
                             contentEl.innerHTML = '<div class="commerce-popup__coupon">' + manualCoupon + '</div>';
-                            actionBtn.textContent = buttonText || 'Usar desconto';
+                            setActionText(buttonText || 'Usar desconto');
                             actionBtn.onclick = function() {
                                 navigator.clipboard.writeText(manualCoupon).then(function() {
-                                    actionBtn.textContent = 'Copiado!';
+                                    setActionText('Copiado!');
                                     setTimeout(function() {
-                                        actionBtn.textContent = buttonText || 'Usar desconto';
+                                        setActionText(buttonText || 'Usar desconto');
                                     }, 2000);
                                 });
                             };
@@ -1502,12 +1510,12 @@ body_theme4 @endif
                             selectedItem = showRandom ? coupons[Math.floor(Math.random() * coupons.length)] : coupons[0];
                             contentEl.innerHTML = '<div class="commerce-popup__coupon">' + selectedItem.code + '</div>' +
                                 '<small class="text-muted">Desconto de ' + selectedItem.discount + '% - ' + selectedItem.title + '</small>';
-                            actionBtn.textContent = 'Pegar cupom';
+                            setActionText('Pegar cupom');
                             actionBtn.onclick = function() {
                                 navigator.clipboard.writeText(selectedItem.code).then(function() {
-                                    actionBtn.textContent = 'Copiado!';
+                                    setActionText('Copiado!');
                                     setTimeout(function() {
-                                        actionBtn.textContent = 'Pegar cupom';
+                                        setActionText('Pegar cupom');
                                     }, 2000);
                                 });
                             };
@@ -1521,7 +1529,7 @@ body_theme4 @endif
                                 '<h4>' + selectedItem.name + '</h4>' +
                                 '<div class="commerce-popup__price">' + priceHtml + '</div>' +
                                 '</div>';
-                            actionBtn.textContent = 'Ir para o produto';
+                            setActionText('Ir para o produto');
                             actionBtn.onclick = function() {
                                 window.location.href = '/product/' + selectedItem.slug;
                             };

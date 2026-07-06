@@ -12,6 +12,7 @@ Formato padrao:
 ## 2026-07-05 - Reducao do popup de comunicacao
 
 ### Corrigido
+- Botao do popup de saida passou a usar a mesma estrutura com `span` dos botoes do tema, corrigindo o hover sem texto.
 - Aviso de cookies foi reorganizado em telas pequenas para manter o botao de aceite clicavel e afastar o botao do WhatsApp.
 - Popup de comunicacao foi reduzido para um tamanho mais contido no desktop e no mobile, sem alterar o gatilho de abertura.
 - Espacamentos internos e altura minima foram ajustados para ficar mais proximo do padrao aprovado.
