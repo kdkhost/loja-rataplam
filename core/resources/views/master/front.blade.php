@@ -426,38 +426,7 @@ body_theme4 @endif
     <!--    announcement banner section start   -->
     <a class="announcement-banner" href="#announcement-modal"></a>
     <div id="announcement-modal" class="mfp-hide white-popup">
-        @if ($setting->announcement_type == 'newletter')
-            <div class="announcement-with-content">
-                <div class="left-area">
-                    <img src="{{ url('/core/public/storage/images/' . $setting->announcement) }}" alt="">
-                </div>
-                <div class="right-area">
-                    <h3 class="">{{ $setting->announcement_title }}</h3>
-                    <p>{{ $setting->announcement_details }}</p>
-                    <form class="subscriber-form" action="{{ route('front.subscriber.submit') }}" method="post">
-                        @csrf
-                        <div class="input-group">
-                            <input class="form-control" type="email" name="email"
-                                placeholder="{{ __('Your e-mail') }}">
-                            <span class="input-group-addon"><i class="icon-mail"></i></span>
-                        </div>
-                        <div aria-hidden="true">
-                            <input type="hidden" name="b_c7103e2c981361a6639545bd5_1194bb7544" tabindex="-1">
-                        </div>
-
-                        <button class="btn btn-primary btn-block mt-2" type="submit">
-                            <span>{{ __('Subscribe') }}</span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @else
-            <a href="{{ $setting->announcement_link }}">
-                <img src="{{ url('/core/public/storage/images/' . $setting->announcement) }}" alt="">
-            </a>
-        @endif
-
-
+        @include('includes.announcement-popup', ['setting' => $setting])
     </div>
     <!--    announcement banner section end   -->
 
@@ -701,23 +670,62 @@ body_theme4 @endif
             </div>
         @endif
         @if ($setting->exit_popup_enabled)
-            <div class="commerce-popup" id="exit-popup" hidden>
+            @php
+                $exitPopupMode = $setting->exit_popup_mode ?? 'manual';
+                $exitPopupCouponIds = json_decode($setting->exit_popup_coupon_ids ?? '[]', true) ?: [];
+                $exitPopupProductIds = json_decode($setting->exit_popup_product_ids ?? '[]', true) ?: [];
+                $exitPopupShowRandom = $setting->exit_popup_show_random ?? false;
+
+                $exitPopupCoupons = [];
+                $exitPopupProducts = [];
+                $selectedExitCoupon = null;
+                $selectedExitProduct = null;
+
+                if ($exitPopupMode === 'coupon' && !empty($exitPopupCouponIds)) {
+                    $exitPopupCoupons = \App\Models\PromoCode::whereIn('id', $exitPopupCouponIds)
+                        ->where('status', 1)
+                        ->get();
+                    if ($exitPopupShowRandom && $exitPopupCoupons->count() > 0) {
+                        $selectedExitCoupon = $exitPopupCoupons->random();
+                    } elseif ($exitPopupCoupons->count() > 0) {
+                        $selectedExitCoupon = $exitPopupCoupons->first();
+                    }
+                }
+
+                if ($exitPopupMode === 'product' && !empty($exitPopupProductIds)) {
+                    $exitPopupProducts = \App\Models\Item::whereIn('id', $exitPopupProductIds)
+                        ->where('status', 1)
+                        ->get();
+                    if ($exitPopupShowRandom && $exitPopupProducts->count() > 0) {
+                        $selectedExitProduct = $exitPopupProducts->random();
+                    } elseif ($exitPopupProducts->count() > 0) {
+                        $selectedExitProduct = $exitPopupProducts->first();
+                    }
+                }
+            @endphp
+            <div class="commerce-popup" id="exit-popup" hidden
+                 data-mode="{{ $exitPopupMode }}"
+                 data-show-random="{{ $exitPopupShowRandom ? 'true' : 'false' }}"
+                 data-coupons="{{ json_encode(collect($exitPopupCoupons)->map(function($c) { return ['id' => $c->id, 'code' => $c->code_name, 'discount' => $c->discount, 'title' => $c->title]; })->toArray()) }}"
+                 data-products="{{ json_encode(collect($exitPopupProducts)->map(function($p) { return ['id' => $p->id, 'name' => $p->name, 'price' => $p->discount_price, 'previous_price' => $p->previous_price, 'slug' => $p->slug]; })->toArray()) }}"
+                 data-manual-coupon="{{ $setting->exit_popup_coupon }}"
+                 data-title="{{ $setting->exit_popup_title ?: 'Antes de sair' }}"
+                 data-text="{{ $setting->exit_popup_text ?: 'Aproveite um desconto especial antes de finalizar sua visita.' }}"
+                 data-button-text="{{ $setting->exit_popup_button_text }}"
+                 data-link="{{ $setting->exit_popup_link }}"
+            >
                 <button type="button" class="commerce-popup__close" data-popup-close>&times;</button>
                 <div class="commerce-popup__body">
-                    <h3>{{ $setting->exit_popup_title ?: 'Antes de sair' }}</h3>
-                    <p>{{ $setting->exit_popup_text ?: 'Aproveite um desconto especial antes de finalizar sua visita.' }}</p>
-                    @if ($setting->exit_popup_coupon)
-                        <div class="commerce-popup__coupon">{{ $setting->exit_popup_coupon }}</div>
-                    @endif
-                    @if ($setting->exit_popup_link)
-                        <a class="btn btn-primary" href="{{ $setting->exit_popup_link }}">{{ $setting->exit_popup_button_text ?: 'Usar desconto' }}</a>
-                    @endif
+                    <h3 class="exit-popup-title"></h3>
+                    <p class="exit-popup-text"></p>
+                    <div class="exit-popup-content"></div>
+                    <button class="btn btn-primary exit-popup-action"></button>
                 </div>
             </div>
         @endif
         <style>
             .commerce-popup-backdrop{position:fixed;inset:0;background:rgba(17,24,39,.52);z-index:1060}.commerce-popup{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1061;width:min(520px,calc(100% - 32px));background:#fff;border-radius:8px;box-shadow:0 28px 80px rgba(17,24,39,.28);overflow:hidden}
-            .commerce-popup img{width:100%;max-height:260px;object-fit:cover}.commerce-popup__body{padding:28px;text-align:center}.commerce-popup__body h3{margin:0 0 12px}.commerce-popup__body p{color:#6b7280}.commerce-popup__close{position:absolute;right:10px;top:10px;border:0;background:#fff;color:#111827;width:34px;height:34px;border-radius:50%;font-size:24px;line-height:1;box-shadow:0 6px 18px rgba(17,24,39,.16)}.commerce-popup__coupon{display:inline-block;margin:8px 0 18px;padding:10px 18px;border:1px dashed #177dff;border-radius:6px;color:#177dff;font-weight:700;letter-spacing:.08em}.commerce-popup__badge{display:inline-block;margin-bottom:12px;padding:7px 12px;border-radius:4px;background:#111827;color:#fff;font-size:12px;font-weight:700;letter-spacing:.08em}.commerce-popup__price{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px}.commerce-popup__price span{text-decoration:line-through;color:#9ca3af}.commerce-popup__price strong{font-size:24px;color:#177dff}.commerce-popup-countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.commerce-popup-countdown div{border:1px solid #e5e7eb;border-radius:6px;padding:8px 4px}.commerce-popup-countdown strong{display:block;color:#111827;font-size:20px}.commerce-popup-countdown small{color:#6b7280;text-transform:uppercase;font-size:10px}
+            .commerce-popup img{width:100%;max-height:260px;object-fit:cover}.commerce-popup__body{padding:28px;text-align:center}.commerce-popup__body h3{margin:0 0 12px}.commerce-popup__body p{color:#6b7280}.commerce-popup__close{position:absolute;right:10px;top:10px;border:0;background:#fff;color:#111827;width:34px;height:34px;border-radius:50%;font-size:24px;line-height:1;box-shadow:0 6px 18px rgba(17,24,39,.16)}.commerce-popup__coupon{display:inline-block;margin:8px 0 18px;padding:10px 18px;border:1px dashed #177dff;border-radius:6px;color:#177dff;font-weight:700;letter-spacing:.08em}.commerce-popup__badge{display:inline-block;margin-bottom:12px;padding:7px 12px;border-radius:4px;background:#111827;color:#fff;font-size:12px;font-weight:700;letter-spacing:.08em}.commerce-popup__price{display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px}.commerce-popup__price span{text-decoration:line-through;color:#9ca3af}.commerce-popup__price strong{font-size:24px;color:#177dff}.commerce-popup-countdown{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}.commerce-popup-countdown div{border:1px solid #e5e7eb;border-radius:6px;padding:8px 4px}.commerce-popup-countdown strong{display:block;color:#111827;font-size:20px}.commerce-popup-countdown small{color:#6b7280;text-transform:uppercase;font-size:10px}.commerce-popup__product{margin:16px 0;padding:16px;background:#f9fafb;border-radius:6px}.commerce-popup__product h4{margin:0 0 8px;font-size:16px;color:#111827}.commerce-popup .btn-primary{display:inline-block;padding:12px 24px;background:#177dff;color:#fff;text-decoration:none;border-radius:6px;font-weight:600;border:none;cursor:pointer;transition:background-color .3s ease,color .3s ease}.commerce-popup .btn-primary:hover{background:#0d6efd;color:#fff}
         </style>
     @endif
 
@@ -725,11 +733,53 @@ body_theme4 @endif
     @php
         $announcementPopup = [];
         $announcementPopup['is_announcement'] = $setting->is_announcement;
-        $announcementPopup['announcement_delay'] = $setting->announcement_delay;
+        $announcementPopup['announcement_delay'] = $setting->announcement_delay ?: 30;
+        $announcementPopup['announcement_starts_at'] = $setting->announcement_starts_at ? \Carbon\Carbon::parse($setting->announcement_starts_at)->toIso8601String() : null;
+        $announcementPopup['announcement_ends_at'] = $setting->announcement_ends_at ? \Carbon\Carbon::parse($setting->announcement_ends_at)->toIso8601String() : null;
         $announcementPopup['overlay'] = $setting->overlay;
+        $announcementPopup['mode'] = $setting->announcement_mode ?? 'manual';
+        $announcementPopup['show_random'] = $setting->announcement_show_random ?? false;
+
+        // Get coupons for announcement
+        $announcementCouponIds = json_decode($setting->announcement_coupon_ids ?? '[]', true) ?: [];
+        $announcementCoupons = [];
+        if (!empty($announcementCouponIds)) {
+            $announcementCoupons = \App\Models\PromoCode::whereIn('id', $announcementCouponIds)
+                ->where('status', 1)
+                ->get()
+                ->map(function($c) {
+                    return [
+                        'id' => $c->id,
+                        'code' => $c->code_name,
+                        'discount' => $c->discount,
+                        'title' => $c->title
+                    ];
+                })->toArray();
+        }
+        $announcementPopup['coupons'] = $announcementCoupons;
+
+        // Get products for announcement
+        $announcementProductIds = json_decode($setting->announcement_product_ids ?? '[]', true) ?: [];
+        $announcementProducts = [];
+        if (!empty($announcementProductIds)) {
+            $announcementProducts = \App\Models\Item::whereIn('id', $announcementProductIds)
+                ->where('status', 1)
+                ->get()
+                ->map(function($p) {
+                    return [
+                        'id' => $p->id,
+                        'name' => $p->name,
+                        'price' => $p->discount_price,
+                        'previous_price' => $p->previous_price,
+                        'slug' => $p->slug
+                    ];
+                })->toArray();
+        }
+        $announcementPopup['products'] = $announcementProducts;
+
         $mainbs = [];
         $mainbs['is_announcement'] = 0;
-        $mainbs['announcement_delay'] = $setting->announcement_delay;
+        $mainbs['announcement_delay'] = $setting->announcement_delay ?: 30;
         $mainbs['overlay'] = $setting->overlay;
         $announcementPopup = json_encode($announcementPopup);
         $mainbs = json_encode($mainbs);
@@ -1037,16 +1087,155 @@ body_theme4 @endif
         <script>
             (function () {
                 var settings = window.rataplamAnnouncementPopup || {};
-                var delay = parseInt(settings.announcement_delay || 0, 10) * 1000;
+                var delay = parseInt(settings.announcement_delay || 30, 10) * 1000;
                 var popupKey = 'announcement-popup';
+                var storageKey = 'announcement_popup_closed_until';
+                var thirtyMinutes = 30 * 60 * 1000; // 30 minutos em milissegundos
+                var startsAt = settings.announcement_starts_at ? new Date(settings.announcement_starts_at) : null;
+                var endsAt = settings.announcement_ends_at ? new Date(settings.announcement_ends_at) : null;
+                var now = new Date();
+
+                function isWithinSchedule() {
+                    if (startsAt && now < startsAt) {
+                        return false;
+                    }
+                    if (endsAt && now > endsAt) {
+                        return false;
+                    }
+                    return true;
+                }
+
+                function isPopupBlocked() {
+                    var closedUntil = localStorage.getItem(storageKey);
+                    if (closedUntil) {
+                        var closedTime = parseInt(closedUntil, 10);
+                        if (now.getTime() < closedTime) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+
+                function populateAnnouncementPopup() {
+                    var modal = document.getElementById('announcement-container');
+                    if (!modal) return;
+
+                    var mode = settings.mode || 'manual';
+                    var showRandom = settings.show_random || false;
+                    var coupons = settings.coupons || [];
+                    var products = settings.products || [];
+
+                    var overlay = document.getElementById('announcement-overlay');
+                    var linkEl = modal.querySelector('.announcement-btn');
+                    var contentContainer = modal.querySelector('.announcement-dynamic-content');
+
+                    // Remove existing dynamic content
+                    if (contentContainer) {
+                        contentContainer.remove();
+                    }
+
+                    var selectedItem = null;
+
+                    if (mode === 'coupon' && coupons.length > 0) {
+                        selectedItem = showRandom ? coupons[Math.floor(Math.random() * coupons.length)] : coupons[0];
+
+                        // Create dynamic content container
+                        var newContentContainer = document.createElement('div');
+                        newContentContainer.className = 'announcement-dynamic-content';
+                        newContentContainer.style.marginTop = '16px';
+                        newContentContainer.style.textAlign = 'center';
+                        newContentContainer.innerHTML = '<div class="commerce-popup__coupon" style="display:inline-block;margin:12px 0 20px;padding:12px 20px;border:1px dashed {{ $setting->primary_color }};border-radius:6px;color:{{ $setting->primary_color }};font-weight:700;letter-spacing:.08em;font-size:18px;">' + selectedItem.code + '</div>' +
+                            '<small class="text-muted" style="display:block;margin-top:8px;">Desconto de ' + selectedItem.discount + '% - ' + selectedItem.title + '</small>';
+
+                        // Add copy button
+                        var copyBtn = document.createElement('button');
+                        copyBtn.className = 'btn btn-primary';
+                        copyBtn.textContent = 'Pegar cupom';
+                        copyBtn.style.marginTop = '12px';
+                        copyBtn.onclick = function() {
+                            navigator.clipboard.writeText(selectedItem.code).then(function() {
+                                copyBtn.textContent = 'Copiado!';
+                                setTimeout(function() {
+                                    copyBtn.textContent = 'Pegar cupom';
+                                }, 2000);
+                            });
+                        };
+                        newContentContainer.appendChild(copyBtn);
+
+                        // Insert into overlay
+                        if (overlay) {
+                            overlay.appendChild(newContentContainer);
+                        }
+
+                        // Hide original link if exists
+                        if (linkEl) {
+                            linkEl.style.display = 'none';
+                        }
+
+                    } else if (mode === 'product' && products.length > 0) {
+                        selectedItem = showRandom ? products[Math.floor(Math.random() * products.length)] : products[0];
+                        var priceHtml = '<strong>' + selectedItem.price + '</strong>';
+                        if (selectedItem.previous_price && parseFloat(selectedItem.previous_price) > parseFloat(selectedItem.price)) {
+                            priceHtml = '<span style="text-decoration:line-through;color:#9ca3af;margin-right:8px;">' + selectedItem.previous_price + '</span>' + priceHtml;
+                        }
+
+                        // Create dynamic content container
+                        var newContentContainer = document.createElement('div');
+                        newContentContainer.className = 'announcement-dynamic-content';
+                        newContentContainer.style.marginTop = '16px';
+                        newContentContainer.style.textAlign = 'center';
+                        newContentContainer.innerHTML = '<div class="commerce-popup__product" style="margin:16px 0;padding:20px;background:#f9fafb;border-radius:6px;">' +
+                            '<h4 style="margin:0 0 12px;font-size:18px;color:#111827;">' + selectedItem.name + '</h4>' +
+                            '<div class="commerce-popup__price" style="display:flex;align-items:center;justify-content:center;gap:10px;margin:12px 0 18px;">' + priceHtml + '</div>' +
+                            '</div>';
+
+                        // Add product link button
+                        var productBtn = document.createElement('button');
+                        productBtn.className = 'btn btn-primary';
+                        productBtn.textContent = 'Ir para o produto';
+                        productBtn.style.marginTop = '12px';
+                        productBtn.onclick = function() {
+                            window.location.href = '/product/' + selectedItem.slug;
+                        };
+                        newContentContainer.appendChild(productBtn);
+
+                        // Insert into overlay
+                        if (overlay) {
+                            overlay.appendChild(newContentContainer);
+                        }
+
+                        // Hide original link if exists
+                        if (linkEl) {
+                            linkEl.style.display = 'none';
+                        }
+
+                    } else {
+                        // Manual mode - keep original link
+                        if (linkEl) {
+                            linkEl.style.display = 'inline-block';
+                        }
+                    }
+                }
 
                 function closeAnnouncement() {
                     window.RataplamPopupQueue.release(popupKey);
+                    // Salvar timestamp de fechamento por 30 minutos
+                    localStorage.setItem(storageKey, (now.getTime() + thirtyMinutes).toString());
                 }
 
                 function openAnnouncement() {
-                    var modal = document.getElementById('announcement-modal');
+                    var modal = document.getElementById('announcement-container');
                     if (!modal || !window.jQuery || !window.jQuery.magnificPopup) return;
+
+                    if (!isWithinSchedule()) {
+                        return;
+                    }
+
+                    if (isPopupBlocked()) {
+                        return;
+                    }
+
+                    populateAnnouncementPopup();
 
                     window.RataplamPopupQueue.request(popupKey, function () {
                         window.jQuery.magnificPopup.open({
@@ -1061,7 +1250,9 @@ body_theme4 @endif
                     });
                 }
 
-                setTimeout(openAnnouncement, Math.max(0, delay));
+                if (isWithinSchedule() && !isPopupBlocked()) {
+                    setTimeout(openAnnouncement, Math.max(0, delay));
+                }
             })();
         </script>
     @endif
@@ -1249,14 +1440,105 @@ body_theme4 @endif
                     var exitPopupArmed = false;
                     var exitTouchScroll = 0;
                     var lastScrollY = window.scrollY || window.pageYOffset || 0;
+                    var exitStorageKey = 'exit_popup_closed_until';
+                    var thirtyMinutes = 30 * 60 * 1000;
 
                     setTimeout(function () {
                         exitPopupArmed = true;
                     }, 900);
 
+                    function isExitPopupBlocked() {
+                        var closedUntil = localStorage.getItem(exitStorageKey);
+                        if (closedUntil) {
+                            var closedTime = parseInt(closedUntil, 10);
+                            if (Date.now() < closedTime) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    function populateExitPopup() {
+                        var popup = document.getElementById('exit-popup');
+                        if (!popup) return;
+
+                        var mode = popup.dataset.mode;
+                        var showRandom = popup.dataset.showRandom === 'true';
+                        var coupons = JSON.parse(popup.dataset.coupons || '[]');
+                        var products = JSON.parse(popup.dataset.products || '[]');
+                        var manualCoupon = popup.dataset.manualCoupon;
+                        var title = popup.dataset.title;
+                        var text = popup.dataset.text;
+                        var buttonText = popup.dataset.buttonText;
+                        var link = popup.dataset.link;
+
+                        var titleEl = popup.querySelector('.exit-popup-title');
+                        var textEl = popup.querySelector('.exit-popup-text');
+                        var contentEl = popup.querySelector('.exit-popup-content');
+                        var actionBtn = popup.querySelector('.exit-popup-action');
+
+                        if (titleEl) titleEl.textContent = title;
+                        if (textEl) textEl.textContent = text;
+
+                        var selectedItem = null;
+
+                        if (mode === 'manual' && manualCoupon) {
+                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + manualCoupon + '</div>';
+                            actionBtn.textContent = buttonText || 'Usar desconto';
+                            actionBtn.onclick = function() {
+                                navigator.clipboard.writeText(manualCoupon).then(function() {
+                                    actionBtn.textContent = 'Copiado!';
+                                    setTimeout(function() {
+                                        actionBtn.textContent = buttonText || 'Usar desconto';
+                                    }, 2000);
+                                });
+                            };
+                            if (link) {
+                                actionBtn.onclick = function() {
+                                    window.location.href = link;
+                                };
+                            }
+                        } else if (mode === 'coupon' && coupons.length > 0) {
+                            selectedItem = showRandom ? coupons[Math.floor(Math.random() * coupons.length)] : coupons[0];
+                            contentEl.innerHTML = '<div class="commerce-popup__coupon">' + selectedItem.code + '</div>' +
+                                '<small class="text-muted">Desconto de ' + selectedItem.discount + '% - ' + selectedItem.title + '</small>';
+                            actionBtn.textContent = 'Pegar cupom';
+                            actionBtn.onclick = function() {
+                                navigator.clipboard.writeText(selectedItem.code).then(function() {
+                                    actionBtn.textContent = 'Copiado!';
+                                    setTimeout(function() {
+                                        actionBtn.textContent = 'Pegar cupom';
+                                    }, 2000);
+                                });
+                            };
+                        } else if (mode === 'product' && products.length > 0) {
+                            selectedItem = showRandom ? products[Math.floor(Math.random() * products.length)] : products[0];
+                            var priceHtml = '<strong>' + selectedItem.price + '</strong>';
+                            if (selectedItem.previous_price && parseFloat(selectedItem.previous_price) > parseFloat(selectedItem.price)) {
+                                priceHtml = '<span>' + selectedItem.previous_price + '</span>' + priceHtml;
+                            }
+                            contentEl.innerHTML = '<div class="commerce-popup__product">' +
+                                '<h4>' + selectedItem.name + '</h4>' +
+                                '<div class="commerce-popup__price">' + priceHtml + '</div>' +
+                                '</div>';
+                            actionBtn.textContent = 'Ir para o produto';
+                            actionBtn.onclick = function() {
+                                window.location.href = '/product/' + selectedItem.slug;
+                            };
+                        } else {
+                            actionBtn.style.display = 'none';
+                        }
+                    }
+
                     function showExitPopup() {
-                        if (!exitPopupArmed || hasSeen('exit_popup_seen') || hasOpenPopup()) return;
+                        if (!exitPopupArmed || hasSeen('exit_popup_seen') || hasOpenPopup() || isExitPopupBlocked()) return;
+                        populateExitPopup();
                         openPopup('exit-popup', 'exit_popup_seen');
+                    }
+
+                    function closeExitPopup() {
+                        localStorage.setItem(exitStorageKey, (Date.now() + thirtyMinutes).toString());
+                        closePopups();
                     }
 
                     document.addEventListener('mouseout', function (event) {
@@ -1282,6 +1564,13 @@ body_theme4 @endif
                         }
                         lastScrollY = currentScrollY;
                     }, { passive: true });
+
+                    // Override close button for exit popup
+                    var exitPopupCloseBtn = document.querySelector('#exit-popup .commerce-popup__close');
+                    if (exitPopupCloseBtn) {
+                        exitPopupCloseBtn.removeEventListener('click', closePopups);
+                        exitPopupCloseBtn.addEventListener('click', closeExitPopup);
+                    }
                 @endif
             })();
         </script>
