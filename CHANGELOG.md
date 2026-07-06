@@ -11,6 +11,9 @@ Formato padrao:
 
 ## 2026-07-06 - Ajuste final do popup de saida
 
+### Adicionado
+- Banners da home receberam opcao no painel para ocultar o texto sobre a imagem sem remover o clique do banner.
+
 ### Corrigido
 - Popup de saida manteve a selecao conjunta de cupons e produtos, mas o fallback manual deixou de sobrescrever a copia do cupom.
 - Mensagens de salvamento do painel de popups foram padronizadas em portugues para evitar retorno de texto em ingles no admin.

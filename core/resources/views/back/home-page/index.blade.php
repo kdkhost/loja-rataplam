@@ -107,6 +107,12 @@
                                                 placeholder="{{ __('Enter Url') }}"  value="{{isset($hero_banner['url2']) ? $hero_banner['url2'] : ''}}" >
                                         </div>
 
+                                        @include('back.home-page.partials.banner-hide-text-options', [
+                                            'banner' => $hero_banner,
+                                            'count' => 2,
+                                            'prefix' => 'hero_banner',
+                                        ])
+
 
                                     <div class="form-group">
                                         <button type="submit" class="btn btn-secondary ">{{ __('Submit') }}</button>
@@ -217,6 +223,12 @@
                                             <input type="text" name="firsturl3" class="form-control" id="firsturl3"
                                                 placeholder="{{ __('Enter Banner Url') }}" value="{{$first_banner['firsturl3']}}" >
                                         </div>
+
+                                        @include('back.home-page.partials.banner-hide-text-options', [
+                                            'banner' => $first_banner,
+                                            'count' => 3,
+                                            'prefix' => 'first_banner',
+                                        ])
 
                                     <div class="form-group">
                                             <button type="submit" class="btn btn-secondary ">{{ __('Submit') }}</button>
@@ -466,6 +478,12 @@
                                             <input type="text" name="url3" class="form-control" id="url3"
                                                 placeholder="{{ __('Enter Banner Url') }}" value="{{$secend_banner['url3']}}" >
                                         </div>
+
+                                        @include('back.home-page.partials.banner-hide-text-options', [
+                                            'banner' => $secend_banner,
+                                            'count' => 3,
+                                            'prefix' => 'secend_banner',
+                                        ])
 
                                     <div class="form-group">
                                             <button type="submit" class="btn btn-secondary ">{{ __('Submit') }}</button>
@@ -800,6 +818,12 @@
                                                 placeholder="{{ __('Enter Banner Url') }}" value="{{$third_banner['url2']}}" >
                                         </div>
 
+                                        @include('back.home-page.partials.banner-hide-text-options', [
+                                            'banner' => $third_banner,
+                                            'count' => 2,
+                                            'prefix' => 'third_banner',
+                                        ])
+
                                     <div class="form-group">
                                             <button type="submit"
                                                 class="btn btn-secondary ">{{ __('Submit') }}</button>
@@ -951,6 +975,12 @@
                                             <input type="text" name="url5" class="form-control" id="url5"
                                                 placeholder="{{ __('Enter Banner Url') }}"  value="{{isset($home4_banner['url5']) ? $home4_banner['url5'] : ''}}" >
                                         </div>
+
+                                        @include('back.home-page.partials.banner-hide-text-options', [
+                                            'banner' => $home4_banner,
+                                            'count' => 5,
+                                            'prefix' => 'home4_banner',
+                                        ])
 
                                     <div class="form-group">
                                         <button type="submit" class="btn btn-secondary ">{{ __('Submit') }}</button>

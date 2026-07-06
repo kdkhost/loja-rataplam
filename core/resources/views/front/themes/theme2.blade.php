@@ -71,7 +71,7 @@
             <div class="container ">
                 <div class="row gx-3">
                     <div class="col-md-4">
-                        <a href="{{ $banner_first['firsturl1'] }}" class="genius-banner">
+                        <a href="{{ $banner_first['firsturl1'] }}" class="genius-banner {{ !empty($banner_first['hide_text1']) ? 'banner-text-hidden' : '' }}">
                             <img src="{{ url('/core/public/storage/images/' . $banner_first['img1']) }}" alt="">
                             <div class="inner-content">
                                 @if (isset($banner_first['subtitle1']))
@@ -84,7 +84,7 @@
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <a href="{{ $banner_first['firsturl2'] }}" class="genius-banner">
+                        <a href="{{ $banner_first['firsturl2'] }}" class="genius-banner {{ !empty($banner_first['hide_text2']) ? 'banner-text-hidden' : '' }}">
                             <img src="{{ url('/core/public/storage/images/' . $banner_first['img2']) }}" alt="">
                             <div class="inner-content">
                                 @if (isset($banner_first['subtitle2']))
@@ -97,7 +97,7 @@
                         </a>
                     </div>
                     <div class="col-md-4">
-                        <a href="{{ $banner_first['firsturl3'] }}" class="genius-banner">
+                        <a href="{{ $banner_first['firsturl3'] }}" class="genius-banner {{ !empty($banner_first['hide_text3']) ? 'banner-text-hidden' : '' }}">
                             <img src="{{ url('/core/public/storage/images/' . $banner_first['img3']) }}" alt="">
                             <div class="inner-content">
                                 @if (isset($banner_first['subtitle3']))
@@ -281,7 +281,7 @@
         <div class="container ">
             <div class="row gx-3">
                 <div class="col-md-4">
-                    <a href="{{ $banner_secend['url1'] }}" class="genius-banner">
+                    <a href="{{ $banner_secend['url1'] }}" class="genius-banner {{ !empty($banner_secend['hide_text1']) ? 'banner-text-hidden' : '' }}">
                         <img class="lazy" data-src="{{ url('/core/public/storage/images/' . $banner_secend['img1']) }}"
                             alt="">
                         <div class="inner-content">
@@ -296,7 +296,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="{{ $banner_secend['url2'] }}" class="genius-banner">
+                    <a href="{{ $banner_secend['url2'] }}" class="genius-banner {{ !empty($banner_secend['hide_text2']) ? 'banner-text-hidden' : '' }}">
                         <img class="lazy" data-src="{{ url('/core/public/storage/images/' . $banner_secend['img2']) }}"
                             alt="">
                         <div class="inner-content">
@@ -311,7 +311,7 @@
                     </a>
                 </div>
                 <div class="col-md-4">
-                    <a href="{{ $banner_secend['url3'] }}" class="genius-banner">
+                    <a href="{{ $banner_secend['url3'] }}" class="genius-banner {{ !empty($banner_secend['hide_text3']) ? 'banner-text-hidden' : '' }}">
                         <img class="lazy" data-src="{{ url('/core/public/storage/images/' . $banner_secend['img3']) }}"
                             alt="">
                         <div class="inner-content">
@@ -556,7 +556,7 @@
         <div class="container ">
             <div class="row gx-3">
                 <div class="col-md-6">
-                    <a href="{{ $banner_third['url1'] }}" class="genius-banner">
+                    <a href="{{ $banner_third['url1'] }}" class="genius-banner {{ !empty($banner_third['hide_text1']) ? 'banner-text-hidden' : '' }}">
                         <img class="lazy" data-src="{{ url('/core/public/storage/images/' . $banner_third['img1']) }}"
                             alt="">
                         <div class="inner-content">
@@ -570,7 +570,7 @@
                     </a>
                 </div>
                 <div class="col-md-6">
-                    <a href="{{ $banner_third['url2'] }}" class="genius-banner">
+                    <a href="{{ $banner_third['url2'] }}" class="genius-banner {{ !empty($banner_third['hide_text2']) ? 'banner-text-hidden' : '' }}">
                         <img class="lazy" data-src="{{ url('/core/public/storage/images/' . $banner_third['img2']) }}"
                             alt="">
                         <div class="inner-content">

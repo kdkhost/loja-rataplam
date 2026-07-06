@@ -21,6 +21,16 @@ class HomePageController extends Controller
         $this->middleware('adminlocalize');
     }
 
+    private function normalizeBannerTextVisibility(array $input, int $bannerCount, Request $request): array
+    {
+        for ($i = 1; $i <= $bannerCount; $i++) {
+            $key = 'hide_text' . $i;
+            $input[$key] = $request->has($key) ? 1 : 0;
+        }
+
+        return $input;
+    }
+
 
     public function index(){
         $data = HomeCutomize::first();
@@ -70,6 +80,7 @@ class HomePageController extends Controller
             }
         }
 
+        $input = $this->normalizeBannerTextVisibility($input, 2, $request);
 
         $data->hero_banner = json_encode($input,true);
         $data->update();
@@ -105,6 +116,7 @@ class HomePageController extends Controller
 
         unset($input['_token']);
 
+        $input = $this->normalizeBannerTextVisibility($input, 3, $request);
 
         $data->banner_first = json_encode($input,true);
         $data->update();
@@ -140,6 +152,7 @@ class HomePageController extends Controller
 
         unset($input['_token']);
 
+        $input = $this->normalizeBannerTextVisibility($input, 3, $request);
 
         $data->banner_secend = json_encode($input,true);
         $data->update();
@@ -173,7 +186,7 @@ class HomePageController extends Controller
         }
         unset($input['_token']);
 
-
+        $input = $this->normalizeBannerTextVisibility($input, 2, $request);
 
 
         $data->banner_third = json_encode($input,true);
@@ -254,8 +267,9 @@ class HomePageController extends Controller
 
         $data = HomeCutomize::first();
         if(!$data->home_page4){
-        $data->home_page4 = json_encode($input,true);
-        $data->update();
+            $input = $this->normalizeBannerTextVisibility($input, 5, $request);
+            $data->home_page4 = json_encode($input,true);
+            $data->update();
         }else{
             foreach(json_decode($data->home_page4,true) as $key => $value){
                 if(isset($input[$key])){
@@ -264,6 +278,7 @@ class HomePageController extends Controller
                     $input[$key] = $value;
                 }
             }
+            $input = $this->normalizeBannerTextVisibility($input, 5, $request);
             $data->home_page4 = json_encode($input,true);
             $data->update();
         }

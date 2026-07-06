@@ -82,6 +82,11 @@
     <style>
         {{ $setting->custom_css }}
 
+        .banner-text-hidden .inner-content,
+        .banner-text-hidden > h4 {
+            display: none !important;
+        }
+
         .footer-bottom-bar {
             display: flex;
             align-items: center;
