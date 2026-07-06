@@ -15,6 +15,7 @@ Formato padrao:
 - Popup de saida manteve a selecao conjunta de cupons e produtos, mas o fallback manual deixou de sobrescrever a copia do cupom.
 - Mensagens de salvamento do painel de popups foram padronizadas em portugues para evitar retorno de texto em ingles no admin.
 - Titulo do popup de saida deixou de truncar no desktop e voltou a quebrar linha completa com alinhamento a esquerda.
+- Popup de comunicacao passou a usar divisao visual fixa, texto completo a esquerda e imagem suavizada no fundo como na referencia aprovada.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.

@@ -10,7 +10,7 @@
     $announcementDetails = trim((string) ($setting->announcement_details ?? ''));
     $announcementLink = trim((string) ($setting->announcement_link ?? ''));
     $announcementButtonText = trim((string) ($setting->announcement_button_text ?? ''));
-    $announcementButtonText = $announcementButtonText !== '' ? $announcementButtonText : ($setting->announcement_type === 'newletter' ? __('Subscribe') : __('View more'));
+    $announcementButtonText = $announcementButtonText !== '' ? $announcementButtonText : ($setting->announcement_type === 'newletter' ? 'Inscrever-se' : 'Ver Mais');
 @endphp
 
 <style>
@@ -31,6 +31,23 @@
         border-radius: 10px;
     }
 
+    #announcement-container.announcement-with-content::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(246, 240, 229, 0.78);
+        z-index: 0;
+    }
+
+    #announcement-container.announcement-with-content::after {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 45.5%;
+        background: rgba(255, 249, 235, 0.96);
+        z-index: 1;
+    }
+
     #announcement-container .left-area {
         display: none;
     }
@@ -43,22 +60,24 @@
         justify-content: center;
         align-items: flex-start;
         gap: 12px;
-        width: min(44%, 420px);
-        padding: clamp(24px, 3.2vw, 40px);
+        width: 45.5%;
+        padding: 40px;
         overflow: auto;
-        background: linear-gradient(90deg, rgba(255, 249, 235, 0.94) 0%, rgba(255, 249, 235, 0.84) 68%, rgba(255, 249, 235, 0.62) 100%);
+        background: transparent;
+        z-index: 2;
     }
 
     #announcement-overlay .announcement-title {
         margin: 0;
         color: #111827;
-        font-size: clamp(24px, 2.4vw, 34px);
-        line-height: 1.1;
+        font-size: 32px;
+        line-height: 1.08;
         font-weight: 800;
         max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
+        word-break: normal;
         text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
     }
 
@@ -114,7 +133,10 @@
         #announcement-overlay.right-area {
             width: 58%;
             padding: 22px 18px 22px 24px;
-            background: linear-gradient(90deg, rgba(255, 249, 235, 0.95) 0%, rgba(255, 249, 235, 0.84) 72%, rgba(255, 249, 235, 0.58) 100%);
+        }
+
+        #announcement-container.announcement-with-content::after {
+            width: 58%;
         }
 
         #announcement-overlay .announcement-text {
@@ -136,6 +158,10 @@
         #announcement-overlay.right-area {
             width: 74%;
             padding: 18px 12px 18px 18px;
+        }
+
+        #announcement-container.announcement-with-content::after {
+            width: 74%;
         }
 
         #announcement-overlay .announcement-title {
