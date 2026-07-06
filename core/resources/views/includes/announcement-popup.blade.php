@@ -9,6 +9,8 @@
     $announcementTitle = trim((string) ($setting->announcement_title ?? ''));
     $announcementDetails = trim((string) ($setting->announcement_details ?? ''));
     $announcementLink = trim((string) ($setting->announcement_link ?? ''));
+    $announcementButtonText = trim((string) ($setting->announcement_button_text ?? ''));
+    $announcementButtonText = $announcementButtonText !== '' ? $announcementButtonText : ($setting->announcement_type === 'newletter' ? __('Subscribe') : __('View more'));
 @endphp
 
 <style>
@@ -71,37 +73,14 @@
     }
 
     .announcement-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
+        display: inline-block;
         width: fit-content;
-        min-height: 54px;
-        padding: 9px 22px;
-        border-radius: 4px;
-        background: {{ $setting->primary_color }};
-        color: #fff;
-        font-size: 15px;
-        font-style: normal;
-        font-weight: 500 !important;
-        border: 0;
-        transition: filter .18s ease, transform .18s ease;
     }
 
     .announcement-btn:hover,
     .announcement-btn:focus {
         color: #fff;
         filter: brightness(.98);
-        transform: translateY(-1px);
-    }
-
-    #announcement-overlay .input-group {
-        width: 100%;
-        max-width: 320px;
-    }
-
-    #announcement-overlay .form-control {
-        min-height: 54px;
     }
 
     @media (max-width: 991px) {
@@ -171,13 +150,13 @@
                 <div aria-hidden="true">
                     <input type="hidden" name="b_c7103e2c981361a6639545bd5_1194bb7544" tabindex="-1">
                 </div>
-                <button class="btn btn-primary btn-block mt-2 announcement-btn" type="submit">
-                    <span>{{ __('Subscribe') }}</span>
+                <button class="btn btn-primary mt-2 announcement-btn" type="submit">
+                    <span>{{ $announcementButtonText }}</span>
                 </button>
             </form>
         @elseif ($announcementLink)
-            <a href="{{ $announcementLink }}" target="_blank" rel="noopener" class="announcement-btn">
-                {{ __('View more') }}
+            <a href="{{ $announcementLink }}" target="_blank" rel="noopener" class="btn btn-primary announcement-btn">
+                <span>{{ $announcementButtonText }}</span>
             </a>
         @endif
     </div>
