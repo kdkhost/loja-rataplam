@@ -8,15 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->text('announcement_button_text')->nullable()->after('announcement_link');
-        });
+        if (!Schema::hasColumn('settings', 'announcement_button_text')) {
+            Schema::table('settings', function (Blueprint $table) {
+                $table->text('announcement_button_text')->nullable()->after('announcement_link');
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('settings', function (Blueprint $table) {
-            $table->dropColumn('announcement_button_text');
-        });
+        if (Schema::hasColumn('settings', 'announcement_button_text')) {
+            Schema::table('settings', function (Blueprint $table) {
+                $table->dropColumn('announcement_button_text');
+            });
+        }
     }
 };

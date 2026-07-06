@@ -12,6 +12,7 @@ Formato padrao:
 ## 2026-07-05 - Reducao do popup de comunicacao
 
 ### Corrigido
+- Migration do texto do botao do popup de comunicacao ficou segura contra coluna duplicada e bases antigas.
 - Botao do popup de saida passou a usar a mesma estrutura com `span` dos botoes do tema, corrigindo o hover sem texto.
 - Aviso de cookies foi reorganizado em telas pequenas para manter o botao de aceite clicavel e afastar o botao do WhatsApp.
 - Popup de comunicacao foi reduzido para um tamanho mais contido no desktop e no mobile, sem alterar o gatilho de abertura.
@@ -27,6 +28,7 @@ Formato padrao:
 - Titulo do popup foi ajustado para permanecer em uma linha e o mobile recebeu largura responsiva mais consistente.
 
 ### Validacao
+- `php artisan migrate` executado para aplicar `announcement_button_text` na tabela `settings`.
 - `php artisan view:cache` executado com sucesso.
 
 ## 2026-07-05 - Popup de comunicacao reabilitado
