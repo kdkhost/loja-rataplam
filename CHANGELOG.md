@@ -12,6 +12,7 @@ Formato padrao:
 ## 2026-07-05 - Reducao do popup de comunicacao
 
 ### Corrigido
+- Precos dos popups promocional e de saida agora usam mascara brasileira com moeda, centavos e separador decimal correto.
 - Migration do texto do botao do popup de comunicacao ficou segura contra coluna duplicada e bases antigas.
 - Botao do popup de saida passou a usar a mesma estrutura com `span` dos botoes do tema, corrigindo o hover sem texto.
 - Aviso de cookies foi reorganizado em telas pequenas para manter o botao de aceite clicavel e afastar o botao do WhatsApp.

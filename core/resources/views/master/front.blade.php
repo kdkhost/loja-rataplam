@@ -650,9 +650,9 @@ body_theme4 @endif
                     @if ($promoPopupProduct)
                         <div class="commerce-popup__price">
                             @if ($promoPopupProduct->previous_price)
-                                <span>{{ \App\Helpers\PriceHelper::setPrice($promoPopupProduct->previous_price) }}</span>
+                                <span>{{ \App\Helpers\PriceHelper::setPreviousPrice($promoPopupProduct->previous_price) }}</span>
                             @endif
-                            <strong>{{ \App\Helpers\PriceHelper::setPrice($promoPopupProduct->discount_price) }}</strong>
+                            <strong>{{ \App\Helpers\PriceHelper::setCurrencyPrice($promoPopupProduct->discount_price) }}</strong>
                         </div>
                     @endif
                     @if ($setting->promo_popup_ends_at)
@@ -707,7 +707,7 @@ body_theme4 @endif
                  data-mode="{{ $exitPopupMode }}"
                  data-show-random="{{ $exitPopupShowRandom ? 'true' : 'false' }}"
                  data-coupons="{{ json_encode(collect($exitPopupCoupons)->map(function($c) { return ['id' => $c->id, 'code' => $c->code_name, 'discount' => $c->discount, 'title' => $c->title]; })->toArray()) }}"
-                 data-products="{{ json_encode(collect($exitPopupProducts)->map(function($p) { return ['id' => $p->id, 'name' => $p->name, 'price' => $p->discount_price, 'previous_price' => $p->previous_price, 'slug' => $p->slug]; })->toArray()) }}"
+                 data-products="{{ json_encode(collect($exitPopupProducts)->map(function($p) { return ['id' => $p->id, 'name' => $p->name, 'price' => $p->discount_price, 'price_display' => \App\Helpers\PriceHelper::setCurrencyPrice($p->discount_price), 'previous_price' => $p->previous_price, 'previous_price_display' => \App\Helpers\PriceHelper::setPreviousPrice($p->previous_price), 'slug' => $p->slug]; })->toArray()) }}"
                  data-manual-coupon="{{ $setting->exit_popup_coupon }}"
                  data-title="{{ $setting->exit_popup_title ?: 'Antes de sair' }}"
                  data-text="{{ $setting->exit_popup_text ?: 'Aproveite um desconto especial antes de finalizar sua visita.' }}"
@@ -770,7 +770,9 @@ body_theme4 @endif
                         'id' => $p->id,
                         'name' => $p->name,
                         'price' => $p->discount_price,
+                        'price_display' => \App\Helpers\PriceHelper::setCurrencyPrice($p->discount_price),
                         'previous_price' => $p->previous_price,
+                        'previous_price_display' => \App\Helpers\PriceHelper::setPreviousPrice($p->previous_price),
                         'slug' => $p->slug
                     ];
                 })->toArray();
@@ -1174,9 +1176,9 @@ body_theme4 @endif
 
                     } else if (mode === 'product' && products.length > 0) {
                         selectedItem = showRandom ? products[Math.floor(Math.random() * products.length)] : products[0];
-                        var priceHtml = '<strong>' + selectedItem.price + '</strong>';
+                        var priceHtml = '<strong>' + (selectedItem.price_display || selectedItem.price) + '</strong>';
                         if (selectedItem.previous_price && parseFloat(selectedItem.previous_price) > parseFloat(selectedItem.price)) {
-                            priceHtml = '<span style="text-decoration:line-through;color:#9ca3af;margin-right:8px;">' + selectedItem.previous_price + '</span>' + priceHtml;
+                            priceHtml = '<span style="text-decoration:line-through;color:#9ca3af;margin-right:8px;">' + (selectedItem.previous_price_display || selectedItem.previous_price) + '</span>' + priceHtml;
                         }
 
                         // Create dynamic content container
@@ -1521,9 +1523,9 @@ body_theme4 @endif
                             };
                         } else if (mode === 'product' && products.length > 0) {
                             selectedItem = showRandom ? products[Math.floor(Math.random() * products.length)] : products[0];
-                            var priceHtml = '<strong>' + selectedItem.price + '</strong>';
+                            var priceHtml = '<strong>' + (selectedItem.price_display || selectedItem.price) + '</strong>';
                             if (selectedItem.previous_price && parseFloat(selectedItem.previous_price) > parseFloat(selectedItem.price)) {
-                                priceHtml = '<span>' + selectedItem.previous_price + '</span>' + priceHtml;
+                                priceHtml = '<span>' + (selectedItem.previous_price_display || selectedItem.previous_price) + '</span>' + priceHtml;
                             }
                             contentEl.innerHTML = '<div class="commerce-popup__product">' +
                                 '<h4>' + selectedItem.name + '</h4>' +
