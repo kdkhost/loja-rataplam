@@ -13,25 +13,25 @@
 
 <style>
     .white-popup {
-        width: min(820px, calc(100vw - 24px));
-        max-width: 820px;
-        margin: 14px auto;
+        width: min(900px, calc(100vw - 24px));
+        max-width: 900px;
+        margin: 12px auto;
     }
 
     #announcement-container.announcement-with-content {
-        display: flex;
+        position: relative;
         width: 100%;
-        min-height: 440px;
-        max-height: calc(100vh - 36px);
-        background: #fff;
+        aspect-ratio: 1.92 / 1;
+        min-height: 0;
+        max-height: calc(100vh - 24px);
+        background: #f5efe3;
         overflow: hidden;
-        border-radius: 8px;
+        border-radius: 10px;
     }
 
     #announcement-container .left-area {
-        position: relative;
-        flex: 0 0 42%;
-        min-height: 440px;
+        position: absolute;
+        inset: 0;
         background: #f5efe3 center center / cover no-repeat;
         overflow: hidden;
     }
@@ -44,30 +44,34 @@
     }
 
     #announcement-overlay.right-area {
-        flex: 1;
+        position: absolute;
+        inset: 0;
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: flex-start;
         gap: 12px;
-        padding: clamp(22px, 3vw, 36px);
+        width: 54%;
+        padding: clamp(24px, 3.2vw, 42px);
         overflow: auto;
-        background: linear-gradient(180deg, #fffaf0 0%, #fff8ea 100%);
+        background: linear-gradient(90deg, rgba(255, 249, 235, 0.92) 0%, rgba(255, 249, 235, 0.72) 58%, rgba(255, 249, 235, 0) 100%);
     }
 
     #announcement-overlay .announcement-title {
         margin: 0;
         color: #111827;
-        font-size: clamp(24px, 2.4vw, 32px);
+        font-size: clamp(26px, 2.6vw, 38px);
         line-height: 1.1;
         font-weight: 800;
+        max-width: 9ch;
     }
 
     #announcement-overlay .announcement-text {
         margin: 0;
         color: #4b5563;
-        font-size: 16px;
-        line-height: 1.7;
-        max-width: 42ch;
+        font-size: 17px;
+        line-height: 1.55;
+        max-width: 22ch;
     }
 
     #announcement-overlay .announcement-dynamic-content {
@@ -98,7 +102,7 @@
 
     #announcement-overlay .input-group {
         width: 100%;
-        max-width: 360px;
+        max-width: 320px;
     }
 
     #announcement-overlay .form-control {
@@ -107,27 +111,28 @@
 
     @media (max-width: 991px) {
         .white-popup {
-            width: min(860px, calc(100vw - 20px));
+            width: min(760px, calc(100vw - 20px));
         }
 
         #announcement-container.announcement-with-content {
-            flex-direction: column;
-            min-height: auto;
+            aspect-ratio: auto;
+            min-height: 380px;
             max-height: calc(100vh - 24px);
         }
 
         #announcement-container .left-area {
-            flex: 0 0 auto;
-            width: 100%;
-            min-height: 300px;
+            position: absolute;
+            inset: 0;
         }
 
         #announcement-overlay.right-area {
-            padding: 22px 20px 24px;
+            width: 62%;
+            padding: 22px 18px 22px 24px;
+            background: linear-gradient(90deg, rgba(255, 249, 235, 0.94) 0%, rgba(255, 249, 235, 0.76) 64%, rgba(255, 249, 235, 0) 100%);
         }
 
         #announcement-overlay .announcement-text {
-            max-width: none;
+            max-width: 26ch;
         }
     }
 
@@ -137,16 +142,19 @@
             margin: 8px auto;
         }
 
-        #announcement-container .left-area {
-            min-height: 240px;
-        }
-
         #announcement-overlay.right-area {
-            padding: 18px 16px 20px;
+            width: 72%;
+            padding: 18px 14px 18px 18px;
         }
 
         #announcement-overlay .announcement-title {
             font-size: 22px;
+            max-width: none;
+        }
+
+        #announcement-overlay .announcement-text {
+            font-size: 15px;
+            max-width: none;
         }
     }
 </style>

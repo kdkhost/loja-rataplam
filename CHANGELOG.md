@@ -15,6 +15,7 @@ Formato padrao:
 - Popup de comunicacao foi reduzido para um tamanho mais contido no desktop e no mobile, sem alterar o gatilho de abertura.
 - Espacamentos internos e altura minima foram ajustados para ficar mais proximo do padrao aprovado.
 - Popup de comunicacao agora acompanha a altura visual do slide principal da home.
+- Popup de comunicacao agora usa o mesmo formato visual do banner principal, com imagem em bloco unico.
 
 ### Validacao
 - `php artisan view:cache` executado com sucesso.
