@@ -76,13 +76,27 @@
     }
 
     .announcement-btn {
-        display: inline-block;
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        color: #fff !important;
         width: fit-content;
+    }
+
+    .announcement-btn::before {
+        z-index: 0;
+    }
+
+    .announcement-btn > span {
+        position: relative;
+        z-index: 2;
+        color: #fff !important;
     }
 
     .announcement-btn:hover,
     .announcement-btn:focus {
-        color: #fff;
+        color: #fff !important;
         filter: brightness(.98);
     }
 
