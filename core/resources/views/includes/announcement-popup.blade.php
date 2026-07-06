@@ -13,15 +13,15 @@
 
 <style>
     .white-popup {
-        width: min(920px, calc(100vw - 24px));
-        max-width: 920px;
+        width: min(820px, calc(100vw - 24px));
+        max-width: 820px;
         margin: 14px auto;
     }
 
     #announcement-container.announcement-with-content {
         display: flex;
         width: 100%;
-        min-height: 360px;
+        min-height: 440px;
         max-height: calc(100vh - 36px);
         background: #fff;
         overflow: hidden;
@@ -30,8 +30,8 @@
 
     #announcement-container .left-area {
         position: relative;
-        flex: 0 0 40%;
-        min-height: 360px;
+        flex: 0 0 42%;
+        min-height: 440px;
         background: #f5efe3 center center / cover no-repeat;
         overflow: hidden;
     }
@@ -119,7 +119,7 @@
         #announcement-container .left-area {
             flex: 0 0 auto;
             width: 100%;
-            min-height: 240px;
+            min-height: 300px;
         }
 
         #announcement-overlay.right-area {
@@ -138,7 +138,7 @@
         }
 
         #announcement-container .left-area {
-            min-height: 200px;
+            min-height: 240px;
         }
 
         #announcement-overlay.right-area {
