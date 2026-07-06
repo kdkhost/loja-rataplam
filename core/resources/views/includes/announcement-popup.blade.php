@@ -10,6 +10,7 @@
     $announcementDetails = trim((string) ($setting->announcement_details ?? ''));
     $announcementLink = trim((string) ($setting->announcement_link ?? ''));
     $announcementLabel = $setting->announcement_type === 'newletter' ? __('Newsletter Popup') : __('Announcement');
+    $hasAnnouncementImage = (bool) $announcementImage;
 @endphp
 
 <style>
@@ -26,6 +27,9 @@
         overflow: hidden;
         background: #fff;
         border-radius: 8px;
+    }
+    .announcement-with-content--no-image {
+        grid-template-columns: 1fr;
     }
     .announcement-with-content__copy {
         display: flex;
@@ -93,6 +97,12 @@
         min-height: 100%;
         background: #f4f1ea center center / cover no-repeat;
     }
+    .announcement-with-content__visual--fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fff5db 0%, #fbeed0 55%, #f5e3bc 100%);
+    }
     .announcement-with-content__visual::after {
         content: '';
         position: absolute;
@@ -111,6 +121,21 @@
         inset: 0;
         display: block;
         z-index: 2;
+    }
+    .announcement-with-content__fallback {
+        position: relative;
+        z-index: 1;
+        max-width: 68%;
+        text-align: center;
+        color: #6b4e00;
+        font-weight: 700;
+        line-height: 1.55;
+        font-size: 18px;
+        padding: 28px;
+        background: rgba(255,255,255,.42);
+        border: 1px solid rgba(255,255,255,.55);
+        border-radius: 12px;
+        backdrop-filter: blur(4px);
     }
     html.admin-theme-dark .announcement-with-content__copy {
         background: linear-gradient(180deg, #fffaf0 0%, #fff3da 100%);
@@ -185,9 +210,14 @@
         @endif
     </div>
 
-    <div class="announcement-with-content__visual" @if ($announcementImage) style="background-image: url('{{ $announcementImage }}');" @endif>
+    <div class="announcement-with-content__visual {{ $hasAnnouncementImage ? '' : 'announcement-with-content__visual--fallback' }}" @if ($announcementImage) style="background-image: url('{{ $announcementImage }}');" @endif>
         @if ($announcementImage)
             <img class="announcement-with-content__image" src="{{ $announcementImage }}" alt="{{ $announcementTitle ?: $announcementLabel }}">
+        @else
+            <div class="announcement-with-content__fallback">
+                {{ $announcementTitle ?: $announcementLabel }}<br>
+                <small>{{ $announcementDetails ?: __('View more') }}</small>
+            </div>
         @endif
         @if ($announcementLink && $setting->announcement_type !== 'newletter')
             <a class="announcement-with-content__link" href="{{ $announcementLink }}" target="_blank" rel="noopener" aria-label="{{ $announcementTitle ?: $announcementLabel }}"></a>

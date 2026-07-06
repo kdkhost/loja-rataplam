@@ -9,6 +9,15 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-05 - Popup de comunicacao volta a renderizar sem imagem
+
+### Corrigido
+- Popup de comunicacao/announcement deixou de sumir quando a imagem nao esta disponivel ou nao pode ser resolvida.
+- Modal agora exibe um fallback visual com titulo e resumo, mantendo a comunicacao visivel mesmo sem imagem.
+
+### Validacao
+- `php artisan view:cache` sera executado para validar a Blade revisada.
+
 ## 2026-07-05 - Ajuste de dimensao do popup de comunicacao
 
 ### Corrigido
