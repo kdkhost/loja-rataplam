@@ -17,6 +17,7 @@ Formato padrao:
 
 ### Alterado
 - Menu administrativo deixou de disparar download direto ao clicar em backup e passou a abrir a central de gerenciamento.
+- Central de backups passou a separar Banco de dados e Sistema por guias na mesma pagina.
 - Rotas antigas de backup foram preservadas como compatibilidade, sem iniciar download automatico.
 - Backup completo do sistema por ZIP permanece desativado; codigo-fonte deve ser tratado pelo Git e banco pela central de backups.
 
@@ -25,6 +26,7 @@ Formato padrao:
 - `php artisan route:list --name=back.backup` executado com sucesso.
 - `php artisan view:cache` executado com sucesso.
 - Gerado backup SQL local de teste em `storage/app/backups/database`.
+- `php artisan view:cache` reexecutado apos separar os backups por guias.
 
 ## 2026-07-08 - Midias publicas temporarias no Git
 

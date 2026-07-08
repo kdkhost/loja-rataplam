@@ -25,22 +25,23 @@ class BackupController extends Controller
 
     public function index()
     {
+        $activeTab = request()->query('tab') === 'system' ? 'system' : 'database';
+
         return view('back.backup.index', [
             'databaseBackups' => $this->databaseBackups(),
             'backupPathLabel' => 'storage/app/' . self::DATABASE_BACKUP_DIR,
+            'activeTab' => $activeTab,
         ]);
     }
 
     public function systemBackup()
     {
-        return redirect()
-            ->route('back.backup.index')
-            ->withError('Backup completo do sistema por ZIP esta desativado. Use o Git para o codigo-fonte e esta central para o banco de dados.');
+        return redirect()->route('back.backup.index', ['tab' => 'system']);
     }
 
     public function databaseBackup()
     {
-        return redirect()->route('back.backup.index');
+        return redirect()->route('back.backup.index', ['tab' => 'database']);
     }
 
     public function storeDatabase()
@@ -65,7 +66,7 @@ class BackupController extends Controller
         }
 
         return redirect()
-            ->route('back.backup.index')
+            ->route('back.backup.index', ['tab' => 'database'])
             ->withSuccess('Backup do banco de dados criado com sucesso.');
     }
 
@@ -85,7 +86,7 @@ class BackupController extends Controller
         @unlink($path);
 
         return redirect()
-            ->route('back.backup.index')
+            ->route('back.backup.index', ['tab' => 'database'])
             ->withSuccess('Backup excluido com sucesso.');
     }
 
