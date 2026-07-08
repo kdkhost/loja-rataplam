@@ -9,6 +9,11 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-08 - Midias publicas temporarias no Git
+
+### Adicionado
+- Imagens publicas usadas pelo site foram versionadas temporariamente em `core/public/storage/images` para permitir restauracao via clone Git no cPanel.
+
 ## 2026-07-06 - Ajuste final do popup de saida
 
 ### Adicionado
