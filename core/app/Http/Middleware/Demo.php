@@ -16,7 +16,11 @@ class Demo
                 return $next($request);
             }
 
-            if($request->route()->getName() == 'back.system.backup' || $request->route()->getName() == 'back.database.backup') {
+            if(in_array($request->route()->getName(), [
+                'back.system.backup',
+                'back.database.backup',
+                'back.backup.download',
+            ])) {
                 return redirect()->back()->with('error', 'This action is not allowed in demo mode');
             }
 

@@ -9,6 +9,23 @@ Formato padrao:
 - `Banco de dados` para migrations, tabelas e campos novos.
 - `Validacao` para comandos executados e observacoes tecnicas.
 
+## 2026-07-08 - Central de backups administrativos
+
+### Adicionado
+- Painel administrativo ganhou a pagina `admin/backups` para gerar, listar, baixar e excluir backups SQL salvos dentro do sistema.
+- Backups do banco agora sao gravados em `storage/app/backups/database` e baixados apenas por rota autenticada.
+
+### Alterado
+- Menu administrativo deixou de disparar download direto ao clicar em backup e passou a abrir a central de gerenciamento.
+- Rotas antigas de backup foram preservadas como compatibilidade, sem iniciar download automatico.
+- Backup completo do sistema por ZIP permanece desativado; codigo-fonte deve ser tratado pelo Git e banco pela central de backups.
+
+### Validacao
+- `php -l app/Http/Controllers/Back/BackupController.php` executado com sucesso.
+- `php artisan route:list --name=back.backup` executado com sucesso.
+- `php artisan view:cache` executado com sucesso.
+- Gerado backup SQL local de teste em `storage/app/backups/database`.
+
 ## 2026-07-08 - Midias publicas temporarias no Git
 
 ### Adicionado

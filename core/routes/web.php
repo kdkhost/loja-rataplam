@@ -168,6 +168,10 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
         Route::group(['middleware' => 'permissions:System Backup'], function () {
 
             // -------------- SYSTEM BACKUP ---------------//
+            Route::get('backups', 'Back\BackupController@index')->name('back.backup.index');
+            Route::post('backups/database', 'Back\BackupController@storeDatabase')->name('back.backup.database.store');
+            Route::get('backups/download/{file}', 'Back\BackupController@download')->name('back.backup.download');
+            Route::delete('backups/{file}', 'Back\BackupController@destroy')->name('back.backup.destroy');
             Route::get('system/backup', 'Back\BackupController@systemBackup')->name('back.system.backup');
             Route::get('database/backup', 'Back\BackupController@databaseBackup')->name('back.database.backup');
         });

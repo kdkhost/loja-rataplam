@@ -158,8 +158,7 @@
             <ul class="nav nav-collapse">
                 <li><a class="sub-link" href="{{ route('back.role.index') }}"><span class="sub-item">{{ __('Role') }}</span></a></li>
                 <li><a class="sub-link" href="{{ route('back.staff.index') }}"><span class="sub-item">{{ __('System User') }}</span></a></li>
-                <li><a class="sub-link" href="{{ route('back.system.backup') }}"><span class="sub-item">{{ __('System Backup') }}</span></a></li>
-                <li><a class="sub-link" href="{{ route('back.database.backup') }}"><span class="sub-item">{{ __('Database Backup') }}</span></a></li>
+                <li><a class="sub-link" href="{{ route('back.backup.index') }}"><span class="sub-item">Backups do sistema</span></a></li>
                 <li><a class="sub-link" href="{{ route('front.cache.clear') }}"><span class="sub-item">{{ __('Cache Clear') }}</span></a></li>
             </ul>
         </div>

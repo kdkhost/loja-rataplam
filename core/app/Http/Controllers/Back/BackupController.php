@@ -4,14 +4,15 @@ namespace App\Http\Controllers\Back;
 
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use mysqli;
-use Zip;
+use PDO;
+use Throwable;
 
 class BackupController extends Controller
 {
-     /**
+    private const DATABASE_BACKUP_DIR = 'backups/database';
+
+    /**
      * Constructor Method.
      *
      * Setting Authentication
@@ -22,150 +23,196 @@ class BackupController extends Controller
         $this->middleware('adminlocalize');
     }
 
-    
+    public function index()
+    {
+        return view('back.backup.index', [
+            'databaseBackups' => $this->databaseBackups(),
+            'backupPathLabel' => 'storage/app/' . self::DATABASE_BACKUP_DIR,
+        ]);
+    }
+
     public function systemBackup()
     {
-        $dir = public_path();
-        
-        $zip_file = Carbon::now().'-backup.zip';
-
-       // Get real path for our folder
-       $rootPath = realpath($dir);
-
-       $zip = Zip::create($zip_file)->add($rootPath, true);
-       $zip->close();
-
-
-       header('Content-disposition: attachment; filename='.$zip_file);
-       header('Content-type: application/zip');
-       readfile($zip_file);
-       @unlink($zip_file);
+        return redirect()
+            ->route('back.backup.index')
+            ->withError('Backup completo do sistema por ZIP esta desativado. Use o Git para o codigo-fonte e esta central para o banco de dados.');
     }
 
     public function databaseBackup()
     {
-      
-        // Fetch all table names from the database
-        $tables = DB::select('SHOW TABLES');
-        
-        // Extract table names from the result
-        $tableNames = array_map(function($table) {
-            return $table->{'Tables_in_' . env('DB_DATABASE')};
-        }, $tables);
+        return redirect()->route('back.backup.index');
+    }
 
-    
-    $connect = DB::connection()->getPdo();
-
-    $get_all_table_query = "SHOW TABLES";
-    $statement = $connect->prepare($get_all_table_query);
-    $statement->execute();
-    
-    $output = '';
-    foreach($tableNames as $table)
+    public function storeDatabase()
     {
-        $show_table_query = "SHOW CREATE TABLE " . $table . "";
-        $statement = $connect->prepare($show_table_query);
-        $statement->execute();
-        $show_table_result = $statement->fetchAll();
+        $this->ensureBackupDirectory();
 
-        foreach($show_table_result as $show_table_row)
-        {
-            $output .= "\n\n" . $show_table_row["Create Table"] . ";\n\n";
+        $filename = 'database_backup_on_' . Carbon::now()->format('Y-m-d_H-i-s') . '.sql';
+        $path = $this->databaseBackupDirectory() . DIRECTORY_SEPARATOR . $filename;
+
+        try {
+            $this->writeDatabaseDump($path);
+        } catch (Throwable $exception) {
+            if (is_file($path)) {
+                @unlink($path);
+            }
+
+            report($exception);
+
+            return redirect()
+                ->route('back.backup.index')
+                ->withError('Nao foi possivel gerar o backup do banco de dados. Verifique as permissoes da pasta storage.');
         }
-        $select_query = "SELECT * FROM " . $table . "";
-        $statement = $connect->prepare($select_query);
-        $statement->execute();
-        $total_row = $statement->rowCount();
-        $check = Carbon::now();
-        for($count=0; $count<$total_row; $count++)
-        {
-            $single_result = $statement->fetch(\PDO::FETCH_ASSOC);
-            $table_column_array = array_keys($single_result);
-            $table_value_array = array_values($single_result);
-            $new_value_array = [];
-            foreach($table_column_array as $key => $coloumn){
-                $new_value_array[] = $table_value_array[$key];
-                
-                if($coloumn == 'created_at'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['created_at'] = Carbon::now()->subMinutes(rand(1, 55));
-                    }
+
+        return redirect()
+            ->route('back.backup.index')
+            ->withSuccess('Backup do banco de dados criado com sucesso.');
+    }
+
+    public function download(string $file)
+    {
+        $path = $this->resolveDatabaseBackupPath($file);
+
+        return response()->download($path, basename($path), [
+            'Content-Type' => 'application/sql; charset=UTF-8',
+        ]);
+    }
+
+    public function destroy(string $file)
+    {
+        $path = $this->resolveDatabaseBackupPath($file);
+
+        @unlink($path);
+
+        return redirect()
+            ->route('back.backup.index')
+            ->withSuccess('Backup excluido com sucesso.');
+    }
+
+    private function databaseBackups(): array
+    {
+        $this->ensureBackupDirectory();
+
+        $files = glob($this->databaseBackupDirectory() . DIRECTORY_SEPARATOR . '*.sql') ?: [];
+        usort($files, fn ($a, $b) => filemtime($b) <=> filemtime($a));
+
+        return array_map(function ($path) {
+            $createdAt = Carbon::createFromTimestamp(filemtime($path))->timezone(config('app.timezone', 'America/Sao_Paulo'));
+
+            return [
+                'name' => basename($path),
+                'size' => $this->formatBytes(filesize($path)),
+                'bytes' => filesize($path),
+                'created_at' => $createdAt->format('d/m/Y H:i:s'),
+            ];
+        }, $files);
+    }
+
+    private function writeDatabaseDump(string $path): void
+    {
+        $pdo = DB::connection()->getPdo();
+        $handle = fopen($path, 'wb');
+
+        if ($handle === false) {
+            throw new \RuntimeException('Nao foi possivel abrir o arquivo de backup para escrita.');
+        }
+
+        try {
+            fwrite($handle, "-- Backup Rataplam\n");
+            fwrite($handle, '-- Gerado em ' . Carbon::now()->format('d/m/Y H:i:s') . "\n\n");
+            fwrite($handle, "SET FOREIGN_KEY_CHECKS=0;\n\n");
+
+            foreach ($this->tableNames() as $table) {
+                $quotedTable = $this->quoteIdentifier($table);
+                $createTable = DB::select("SHOW CREATE TABLE {$quotedTable}");
+                $createSql = $createTable[0]->{'Create Table'} ?? null;
+
+                if (!$createSql) {
+                    continue;
                 }
-                if($coloumn == 'item_type'){
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['item_type'] = 'normal';
-                    }
+
+                fwrite($handle, "DROP TABLE IF EXISTS {$quotedTable};\n");
+                fwrite($handle, $createSql . ";\n\n");
+
+                $statement = $pdo->query("SELECT * FROM {$quotedTable}");
+
+                while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                    $columns = array_map(fn ($column) => $this->quoteIdentifier($column), array_keys($row));
+                    $values = array_map(fn ($value) => $this->quoteValue($pdo, $value), array_values($row));
+
+                    fwrite($handle, "INSERT INTO {$quotedTable} (" . implode(', ', $columns) . ') VALUES (' . implode(', ', $values) . ");\n");
                 }
-                if($coloumn == 'file_type'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['file_type'] = 'file';
-                    }
-                }
-                if($coloumn == 'subcategory_id'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['subcategory_id'] = 0;
-                    }
-                }
-                if($coloumn == 'brand_id'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['brand_id'] = 0;
-                    }
-                }
-                if($coloumn == 'user_id'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['user_id'] = 0;
-                    }
-                }
-                if($coloumn == 'childcategory_id'){
-                    
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['childcategory_id'] = 0;
-                    }
-                }
-                if($coloumn == 'updated_at'){
-                    if(!$table_value_array[$key]){
-                        unset($new_value_array[$key]);
-                        $new_value_array['updated_at'] = Carbon::now()->subMinutes(rand(1, 55));
-                    }
-                }
-               
+
+                fwrite($handle, "\n");
             }
-            $update = [];
-            foreach($new_value_array as $new_check){
-                $update[] = str_replace("'","\'",$new_check);
-            }
-            
-            $output .= "\nINSERT INTO $table (";
-            $output .= "" . implode(", ", $table_column_array) . ") VALUES (";
-            $output .= "'" . implode("','", $update) . "');\n";
+
+            fwrite($handle, "SET FOREIGN_KEY_CHECKS=1;\n");
+        } finally {
+            fclose($handle);
         }
     }
-    $file_name = 'database_backup_on_' . date('y-m-d') . '.sql';
-    $file_handle = fopen($file_name, 'w+');
-    fwrite($file_handle, $output);
-    fclose($file_handle);
-    header('Content-Description: File Transfer');
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename=' . basename($file_name));
-    header('Content-Transfer-Encoding: binary');
-    header('Expires: 0');
-    header('Cache-Control: must-revalidate');
-    header('Pragma: public');
-    header('Content-Length: ' . filesize($file_name));
-    flush();
-    readfile($file_name);
-    unlink($file_name);
+
+    private function tableNames(): array
+    {
+        return array_map(function ($table) {
+            $values = array_values((array) $table);
+
+            return $values[0];
+        }, DB::select("SHOW FULL TABLES WHERE Table_type = 'BASE TABLE'"));
+    }
+
+    private function quoteIdentifier(string $identifier): string
+    {
+        return '`' . str_replace('`', '``', $identifier) . '`';
+    }
+
+    private function quoteValue(PDO $pdo, mixed $value): string
+    {
+        if ($value === null) {
+            return 'NULL';
+        }
+
+        return $pdo->quote((string) $value);
+    }
+
+    private function databaseBackupDirectory(): string
+    {
+        return storage_path('app/' . self::DATABASE_BACKUP_DIR);
+    }
+
+    private function ensureBackupDirectory(): void
+    {
+        $directory = $this->databaseBackupDirectory();
+
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
+    }
+
+    private function resolveDatabaseBackupPath(string $file): string
+    {
+        if (!preg_match('/^[A-Za-z0-9._-]+\.sql$/', $file)) {
+            abort(404);
+        }
+
+        $path = $this->databaseBackupDirectory() . DIRECTORY_SEPARATOR . $file;
+
+        if (!is_file($path)) {
+            abort(404);
+        }
+
+        return $path;
+    }
+
+    private function formatBytes(int|false $bytes): string
+    {
+        $bytes = (int) $bytes;
+        $units = ['B', 'KB', 'MB', 'GB'];
+
+        for ($index = 0; $bytes >= 1024 && $index < count($units) - 1; $index++) {
+            $bytes /= 1024;
+        }
+
+        return number_format($bytes, $index === 0 ? 0 : 2, ',', '.') . ' ' . $units[$index];
     }
 }
