@@ -61,7 +61,7 @@ class PostController extends Controller
 
         $request->validate([
             'photo' => 'required|array',
-            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'title' => 'required|unique:posts|max:255',
             'category_id' => 'required|integer|exists:bcategories,id',
             'details' => 'required',
@@ -94,7 +94,7 @@ class PostController extends Controller
     {
         $request->validate([
             'photo' => 'sometimes|array',
-            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'title' => 'required|max:255|unique:posts,title,'.$post->id,
             'category_id' => 'required|integer|exists:bcategories,id',
             'details' => 'required',
