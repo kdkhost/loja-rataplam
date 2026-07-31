@@ -25,11 +25,13 @@ return new class extends Migration
             );
         }
 
-        // Verificar slugs vazios
-        $hasEmpty = DB::table('posts')->where('slug', '')->exists();
-        if ($hasEmpty) {
+        // Verificar slugs vazios ou compostos apenas por espaços
+        $hasBlank = DB::table('posts')
+            ->whereRaw('TRIM(slug) = ?', [''])
+            ->exists();
+        if ($hasBlank) {
             throw new \RuntimeException(
-                'Migration interrompida: existem posts com slug vazio. ' .
+                'Migration interrompida: existem posts com slug vazio ou composto apenas por espaços. ' .
                 'Corrija manualmente antes de aplicar o índice UNIQUE.'
             );
         }
