@@ -2,12 +2,11 @@
 
 namespace App\Repositories\Back;
 
-use App\{
-    Models\Post,
-    Helpers\ImageHelper
-};
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use App\Models\Post;
+use App\Helpers\ImageHelper;
+use App\Services\BlogSlugService;
+use App\Services\BlogHtmlSanitizer;
+use App\Services\BlogFileService;
 
 class PostRepository
 {
@@ -22,14 +21,14 @@ class PostRepository
     public function store($request)
     {
         $input = $request->all();
-        $input['slug'] = Str::slug($request->title);
+        $input['slug'] = BlogSlugService::generateSlug($request->title);
+        $input['details'] = BlogHtmlSanitizer::sanitize($request->details ?? '');
         if ($request->has('tags')) {
             $input['tags'] = str_replace(["value", "{", "}", "[", "]", ":", "\""], '', $request->tags);
         }
         if ($request->photo) {
-            $input['photo'] = json_encode($this->storeImageData($request), true);
+            $input['photo'] = $this->storeImageData($request);
         }
-
 
         Post::create($input);
     }
@@ -44,12 +43,13 @@ class PostRepository
     public function update($post, $request)
     {
         $input = $request->all();
-        $input['slug'] = Str::slug($request->title);
+        $input['slug'] = BlogSlugService::generateSlug($request->title, $post->id);
+        $input['details'] = BlogHtmlSanitizer::sanitize($request->details ?? '');
         if ($request->has('tags')) {
             $input['tags'] = str_replace(["value", "{", "}", "[", "]", ":", "\""], '', $request->tags);
         }
         if ($request->photo) {
-            $input['photo'] = json_encode($this->UpdateImageData($request, $post), true);
+            $input['photo'] = $this->UpdateImageData($request, $post);
         }
         $post->update($input);
     }
@@ -57,7 +57,6 @@ class PostRepository
 
     public function storeImageData($request)
     {
-
         $storeData = [];
         if ($photos = $request->file('photo')) {
             foreach ($photos as $key => $photo) {
@@ -69,8 +68,7 @@ class PostRepository
 
     public function UpdateImageData($request, $post)
     {
-
-        $storeData = json_decode($post->photo, true);
+        $storeData = is_array($post->photo) ? $post->photo : [];
 
         if ($photos = $request->file('photo')) {
             foreach ($photos as $key => $photo) {
@@ -85,39 +83,39 @@ class PostRepository
     /**
      * Delete post.
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  Post  $post
+     * @return void
      */
 
     public function delete($post)
     {
-        $images = json_decode($post->photo, true);
+        $images = is_array($post->photo) ? $post->photo : [];
         foreach ($images as $image) {
-            // if (file_exists(base_path('../').'assets/images/'.$image)) {
-            //     unlink(base_path('../').'assets/images/'.$image);
-            // }
-            Storage::delete("images" . '/' . $image);
+            BlogFileService::deleteImage($image);
         }
         $post->delete();
     }
 
     /**
-     * Delete post.
+     * Delete single photo.
      *
+     * @param  int  $key
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return void
      */
 
     public function photoDelete($key, $id)
     {
         $post = Post::findOrFail($id);
-        $photos = json_decode($post->photo, true);
-        $delete_photo = $photos[$key];
+        $photos = is_array($post->photo) ? $post->photo : [];
+        if (!isset($photos[$key])) {
+            return;
+        }
 
-        Storage::delete("images" . '/' . $delete_photo);
-       
+        $delete_photo = $photos[$key];
+        BlogFileService::deleteImage($delete_photo);
+
         unset($photos[$key]);
-        $new_photos = json_encode($photos, true);
-        $post->update(['photo' => $new_photos]);
+        $post->update(['photo' => array_values($photos)]);
     }
 }

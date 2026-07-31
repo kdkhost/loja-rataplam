@@ -54,9 +54,15 @@ class BulkDeleteController extends Controller
             foreach ($ids as $id) {
                 $id = (int)$id;
                 $post = Post::findOrFail($id);
-                $images = json_decode($post->photo, true);
-                foreach ($images as $image) {
-                    Storage::delete("images" . '/' . $image);
+                $images = $post->photo; // Using array cast
+                if (is_array($images)) {
+                    foreach ($images as $image) {
+                        try {
+                            Storage::delete("images" . '/' . $image);
+                        } catch (\Exception $e) {
+                            // Ignora erro se o arquivo físico não existir
+                        }
+                    }
                 }
                 $post->delete();
             }

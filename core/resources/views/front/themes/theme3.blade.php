@@ -496,7 +496,7 @@
                                 <div class="slider-item">
                                     <a href="{{route('front.blog.details',$post->slug)}}" class="blog-post">
                                         <div class="post-thumb">
-                                            <img class="lazy" data-src="{{ url('/core/public/storage/images/' . json_decode($post->photo, true)[array_key_first(json_decode($post->photo, true))]) }}"
+                                            <img class="lazy" data-src="{{ \App\Helpers\BlogImageHelper::url($post->photo) }}"
                                                 alt="{{ __('Blog post image') }}">
                                             </div>
                                         <div class="post-body">

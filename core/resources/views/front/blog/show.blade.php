@@ -15,11 +15,11 @@
     <meta name="description" content="{{ $post->meta_descriptions }}">
 
     <meta name="twitter:title" content="{{ $post->title }}">
-    <meta name="twitter:image" content="{{ url('/core/public/storage/images/' . json_decode($post->photo, true)[0]) }}">
+    <meta name="twitter:image" content="{{ \App\Helpers\BlogImageHelper::url($post->photo) }}">
     <meta name="twitter:description" content="{{ $post->meta_descriptions }}">
 
     <meta name="og:title" content="{{ $post->title }}">
-    <meta name="og:image" content="{{ url('/core/public/storage/images/' . json_decode($post->photo, true)[0]) }}">
+    <meta name="og:image" content="{{ \App\Helpers\BlogImageHelper::url($post->photo) }}">
     <meta name="og:description" content="{{ $post->meta_descriptions }}">
 
 @endsection
@@ -52,9 +52,11 @@
                     <!-- Gallery-->
                     <div class="blog-details-slider owl-carousel">
 
-                        @foreach (json_decode($post->photo, true) as $photo)
-                            <img src="{{ url('/core/public/storage/images/' . $photo) }}" alt="{{ __('Image') }}">
-                        @endforeach
+                        @if(is_array($post->photo))
+                            @foreach ($post->photo as $photo)
+                                <img src="{{ \App\Helpers\BlogImageHelper::url($photo) }}" alt="{{ __('Image') }}">
+                            @endforeach
+                        @endif
                     </div>
                     <div class="blog-details-main-content">
                         <h4 class="pt-4 b-d-title">{{ $post->title }}</h4>
@@ -158,7 +160,7 @@
                         @foreach ($posts as $recent)
                             <div class="entry">
                                 <div class="entry-thumb"><a href="{{ route('front.blog.details', $recent->slug) }}"><img
-                                            src="{{ url('/core/public/storage/images/' . json_decode($recent->photo, true)[array_key_first(json_decode($recent->photo, true))]) }}"
+                                            src="{{ \App\Helpers\BlogImageHelper::url($recent->photo) }}"
                                             alt="{{ __('Post image') }}"></a></div>
                                 <div class="entry-content">
                                     <h4 class="entry-title"><a href="{{ route('front.blog.details', $recent->slug) }}">

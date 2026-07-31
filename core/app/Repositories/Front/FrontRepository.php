@@ -16,7 +16,8 @@ class FrontRepository
 
     public function displayPosts($request){
         if($request->has('category')){
-            return Post::with('category')->whereCategoryId(Bcategory::where('slug',$request->category)->first()->id)->latest('id')->paginate(6);
+            $category = Bcategory::where('slug', $request->category)->firstOrFail();
+            return Post::with('category')->whereCategoryId($category->id)->latest('id')->paginate(6);
         }
         else if($request->has('search')){
             return Post::with('category')->where('title', 'like', '%' . $request->search . '%')->orWhere('details', 'like', '%' . $request->search  . '%')->latest('id')->paginate(6);
@@ -41,7 +42,7 @@ class FrontRepository
         $tags = array_unique(explode(',',$tagz));
         return [
             'posts'       => Post::orderby('id','desc')->take(4)->get(),
-            'post'       => Post::whereSlug($slug)->first(),
+            'post'       => Post::whereSlug($slug)->firstOrFail(),
             'categories' => Bcategory::withCount('posts')->whereStatus(1)->get(),
             'tags'       => array_filter($tags)
         ];
