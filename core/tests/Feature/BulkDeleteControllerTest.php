@@ -16,7 +16,7 @@ class BulkDeleteControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         try {
             DB::connection()->getPdo();
         } catch (\Exception $e) {
@@ -45,14 +45,14 @@ class BulkDeleteControllerTest extends TestCase
         ]);
 
         $invalidId = 9999;
-        
+
         $response = $this->post(route('back.bulk.delete'), [
             'ids' => [$post1->id . ',' . $invalidId . ',' . $post2->id],
             'table' => 'posts'
         ]);
 
         $response->assertStatus(302);
-        
+
         $this->assertDatabaseMissing('posts', ['id' => $post1->id]);
         $this->assertDatabaseMissing('posts', ['id' => $post2->id]);
     }
@@ -84,7 +84,7 @@ class BulkDeleteControllerTest extends TestCase
         ]);
 
         $response->assertStatus(302);
-        
+
         // Post deve ser excluído mesmo se a exclusão da imagem falhar
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
