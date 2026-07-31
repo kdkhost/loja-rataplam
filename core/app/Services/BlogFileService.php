@@ -59,20 +59,25 @@ class BlogFileService
         $relativePath = 'images/' . $filename;
 
         try {
-            if (!$disk->exists($relativePath)) {
-                return true; // Idempotent: file already gone
+            $storageDeleted = true;
+            if ($disk->exists($relativePath)) {
+                $storageDeleted = $disk->delete($relativePath);
+                if (!$storageDeleted) {
+                    Log::warning('Blog: Storage::delete retornou false para arquivo de imagem.');
+                }
             }
 
-            $deleted = $disk->delete($relativePath);
+            $mirrorDeleted = \App\Helpers\ImageHelper::deletePublicMirror('images', $filename);
 
-            if (!$deleted) {
-                Log::warning('Blog: Storage::delete retornou false para arquivo de imagem.');
+            if (!$storageDeleted || !$mirrorDeleted) {
                 return false;
             }
 
             return true;
         } catch (\Exception $e) {
-            Log::warning('Blog: falha ao excluir arquivo de imagem: ' . $e->getMessage());
+            Log::warning('Blog: falha ao excluir arquivo de imagem.', [
+                'exception' => get_class($e),
+            ]);
             return false;
         }
     }
