@@ -261,4 +261,44 @@ class MercadoPagoSettingControllerTest extends TestCase
             'sandbox_access_token' => 'EXISTING-TOKEN',
         ]);
     }
+
+    public function test_configuration_key_always_forced_to_default()
+    {
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
+        $this->actingAs($admin, 'admin');
+
+        // Tentar criar configuração com configuration_key diferente
+        $setting = MercadoPagoSetting::create([
+            'configuration_key' => 'another',
+            'mode' => 'sandbox',
+            'webhook_validation_mode' => 'api_lookup',
+            'fee_calculation_mode' => 'additive',
+            'pix_expiration_minutes' => 30,
+            'max_installments' => 1,
+            'pix_fee_percent' => 0,
+            'pix_fee_fixed' => 0,
+            'credit_fee_percent' => 0,
+            'credit_fee_fixed' => 0,
+        ]);
+
+        // Confirmar que foi forçado para 'default'
+        $this->assertEquals('default', $setting->configuration_key);
+        $this->assertDatabaseHas('mercadopago_settings', [
+            'id' => $setting->id,
+            'configuration_key' => 'default',
+        ]);
+
+        // Tentar atualizar para outro valor
+        $setting->configuration_key = 'different';
+        $setting->save();
+
+        // Confirmar que permanece 'default'
+        $setting->refresh();
+        $this->assertEquals('default', $setting->configuration_key);
+    }
 }

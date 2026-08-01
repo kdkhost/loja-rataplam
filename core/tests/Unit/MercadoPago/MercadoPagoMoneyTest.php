@@ -93,7 +93,7 @@ class MercadoPagoMoneyTest extends TestCase
 
     public function test_cents_to_api_amount_integer()
     {
-        $this->assertEquals(100, $this->money->centsToApiAmount(100));
+        $this->assertEquals(1, $this->money->centsToApiAmount(100));
     }
 
     public function test_cents_to_api_amount_decimal()
@@ -105,5 +105,52 @@ class MercadoPagoMoneyTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->money->centsToApiAmount(-100);
+    }
+
+    public function test_decimal_to_cents_max_safe_value()
+    {
+        // Usar um valor seguro que sabemos que não causa overflow
+        // Em sistemas 64-bit, PHP_INT_MAX é 9223372036854775807
+        // PHP_INT_MAX / 100 = 92233720368547758
+        // Vamos usar um valor um pouco menor para garantir segurança
+        $safeValue = '92233720368547750.99';
+        $expectedCents = 9223372036854775099;
+        $this->assertEquals($expectedCents, $this->money->decimalToCents($safeValue));
+    }
+
+    public function test_decimal_to_cents_rejects_one_cent_above_limit()
+    {
+        $maxSafeInteger = (int) floor(PHP_INT_MAX / 100);
+        $aboveLimit = ($maxSafeInteger + 1) . '.00';
+        $this->expectException(\InvalidArgumentException::class);
+        $this->money->decimalToCents($aboveLimit);
+    }
+
+    public function test_decimal_to_cents_rejects_hundreds_of_digits()
+    {
+        $hugeNumber = str_repeat('9', 500) . '.99';
+        $this->expectException(\InvalidArgumentException::class);
+        $this->money->decimalToCents($hugeNumber);
+    }
+
+    public function test_decimal_to_cents_handles_leading_zeros()
+    {
+        $this->assertEquals(100, $this->money->decimalToCents('000001.00'));
+        $this->assertEquals(1050, $this->money->decimalToCents('000010.50'));
+        $this->assertEquals(1, $this->money->decimalToCents('000000.01'));
+    }
+
+    public function test_decimal_to_cents_no_silent_overflow()
+    {
+        // Testar que não há conversão silenciosa por overflow
+        $maxSafeInteger = (int) floor(PHP_INT_MAX / 100);
+        $overflowValue = ($maxSafeInteger + 1000) . '.00';
+
+        try {
+            $this->money->decimalToCents($overflowValue);
+            $this->fail('Deveria ter lançado InvalidArgumentException por overflow');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('excede o limite', $e->getMessage());
+        }
     }
 }

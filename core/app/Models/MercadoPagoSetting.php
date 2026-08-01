@@ -64,13 +64,7 @@ class MercadoPagoSetting extends Model
 
         static::saving(function ($model) {
             // Proteger o singleton: configuration_key deve ser sempre 'default'
-            if ($model->exists && $model->configuration_key !== 'default') {
-                Log::warning('Tentativa de alterar configuration_key do Mercado Pago', [
-                    'current' => $model->configuration_key,
-                    'admin_id' => auth('admin')->id(),
-                ]);
-                $model->configuration_key = 'default';
-            }
+            $model->configuration_key = 'default';
         });
     }
 }

@@ -3,3 +3,14 @@ core/database/sql/*.sql
 core/.phpunit.result.cache
 .sshpass
 .dbpass
+.env.testing
+core/.env.testing
+.zed/
+core/phpunit.xml.bak
+/ssh_auto.bat
+/ssh_auto.ps1
+/grant.sql
+/validate_env.php
+/create_mercadopago_actions.sql
+/create_mercadopago_tables.sql
+/create_mercadopago_tables_no_fk.sql

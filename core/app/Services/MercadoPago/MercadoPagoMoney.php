@@ -39,12 +39,25 @@ class MercadoPagoMoney
             $decimalPart = '00';
         }
 
+        // Validar overflow da parte inteira antes da conversão
+        // O valor máximo seguro para multiplicação por 100 é PHP_INT_MAX / 100
+        $maxSafeInteger = (int) floor(PHP_INT_MAX / 100);
+        if (strlen($integerPart) > strlen((string) $maxSafeInteger)) {
+            throw new \InvalidArgumentException('Valor excede o limite máximo.');
+        }
+
+        // Validar overflow numérico antes da conversão
+        $integerValue = (int) $integerPart;
+        if ($integerValue > $maxSafeInteger) {
+            throw new \InvalidArgumentException('Valor excede o limite máximo.');
+        }
+
         // Calcular centavos usando operações inteiras
-        $integerCents = (int) $integerPart * 100;
+        $integerCents = $integerValue * 100;
         $decimalCents = (int) $decimalPart;
         $cents = $integerCents + $decimalCents;
 
-        // Validar overflow
+        // Validar overflow final (soma)
         if ($cents > PHP_INT_MAX) {
             throw new \InvalidArgumentException('Valor excede o limite máximo.');
         }
