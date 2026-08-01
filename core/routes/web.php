@@ -163,6 +163,10 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             //------------ PAYMENT SETTING ------------
             Route::get('/setting/payment', 'Back\PaymentSettingController@payment')->name('back.setting.payment');
             Route::post('/setting/payment/update', 'Back\PaymentSettingController@update')->name('back.setting.payment.update');
+
+            //------------ MERCADO PAGO SETTING ------------
+            Route::get('/setting/payment/mercadopago', 'Back\MercadoPagoSettingController@index')->name('back.setting.payment.mercadopago');
+            Route::post('/setting/payment/mercadopago/update', 'Back\MercadoPagoSettingController@update')->name('back.setting.payment.mercadopago.update');
         });
 
         Route::group(['middleware' => 'permissions:System Backup'], function () {

@@ -690,7 +690,7 @@
 
                                                             <div class="col-lg-8">
 
-                                                                <form action="{{ route('back.setting.payment.update') }}"
+                                                                <form action="{{ route('back.setting.payment.mercadopago.update') }}"
                                                                     method="POST" enctype="multipart/form-data">
 
                                                                     @csrf

@@ -9,6 +9,7 @@ class MercadoPagoSetting extends Model
     protected $table = 'mercadopago_settings';
 
     protected $fillable = [
+        'configuration_key',
         'mode',
         'sandbox_public_key',
         'sandbox_access_token',
