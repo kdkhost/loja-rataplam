@@ -4,7 +4,8 @@ namespace App\Repositories\Back;
 
 use App\{
     Helpers\ImageHelper,
-    Models\PaymentSetting
+    Models\PaymentSetting,
+    Services\MercadoPago\MercadoPagoConfigResolver
 };
 
 class PaymentSettingRepository
@@ -45,6 +46,10 @@ class PaymentSettingRepository
         $data['mercadopagoData'] = $mercadopago->convertJsonData();
         $data['mercadopago'] = $mercadopago;
 
+        // Configuração administrativa segura do Mercado Pago
+        $resolver = new MercadoPagoConfigResolver();
+        $data['mercadopagoAdminConfig'] = $resolver->resolveAdminConfiguration();
+
         $authorize = PaymentSetting::whereUniqueKeyword('authorize')->first();
         $data['authorizeData'] = $authorize->convertJsonData();
         $data['authorize'] = $authorize;
@@ -62,10 +67,10 @@ class PaymentSettingRepository
         $data['paystack'] = $paystack;
 
         $paytabs = PaymentSetting::whereUniqueKeyword('paytabs')->first();
-        
+
         $data['paytabsData'] = $paytabs->convertJsonData();
         $data['paytabs'] = $paytabs;
-     
+
         $cod = PaymentSetting::whereUniqueKeyword('cod')->first();
         $data['cod'] = $cod;
 

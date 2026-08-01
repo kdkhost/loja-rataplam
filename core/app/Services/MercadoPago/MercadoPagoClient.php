@@ -3,30 +3,49 @@ namespace App\Services\MercadoPago;
 
 use App\Exceptions\MercadoPagoApiException;
 use GuzzleHttp\Client;
+use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Log;
 
 class MercadoPagoClient
 {
-    protected Client $client;
+    protected ClientInterface $client;
+    protected string $accessToken;
+    protected MercadoPagoMoney $money;
 
-    public function __construct(string $accessToken)
+    public function __construct(string $accessToken, ?ClientInterface $client = null, ?MercadoPagoMoney $money = null)
     {
-        $this->client = new Client([
-            'base_uri' => 'https://api.mercadopago.com',
-            'timeout' => 20,
-            'connect_timeout' => 5,
-            'http_errors' => false,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $accessToken,
-            ],
-        ]);
+        $this->accessToken = $accessToken;
+        $this->money = $money ?? new MercadoPagoMoney();
+
+        if ($client === null) {
+            $this->client = new Client([
+                'base_uri' => 'https://api.mercadopago.com',
+                'timeout' => 20,
+                'connect_timeout' => 5,
+                'http_errors' => false,
+            ]);
+        } else {
+            $this->client = $client;
+        }
     }
 
     protected function request(string $method, string $uri, array $options = []): MercadoPagoResponse
     {
+        // Adicionar headers padrão
+        $defaultHeaders = [
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $this->accessToken,
+        ];
+
+        // Mesclar com headers fornecidos, sem sobrescrever Authorization
+        if (isset($options['headers'])) {
+            $options['headers'] = array_merge($defaultHeaders, $options['headers']);
+        } else {
+            $options['headers'] = $defaultHeaders;
+        }
+
         try {
             $response = $this->client->request($method, $uri, $options);
             $statusCode = $response->getStatusCode();
@@ -114,9 +133,9 @@ class MercadoPagoClient
         ];
 
         if ($amount !== null) {
-            // Converter para float com precisão de 2 casas decimais
-            $amountFloat = (float) $amount;
-            $options['json'] = ['amount' => round($amountFloat, 2)];
+            $cents = $this->money->decimalToCents($amount);
+            $apiAmount = $this->money->centsToApiAmount($cents);
+            $options['json'] = ['amount' => $apiAmount];
         }
 
         return $this->request('POST', "/v1/payments/{$paymentId}/refunds", $options);

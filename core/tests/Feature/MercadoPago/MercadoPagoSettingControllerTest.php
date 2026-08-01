@@ -29,7 +29,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_saves_configuration()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -60,7 +65,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_validates_mode()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -80,7 +90,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_validates_pix_expiration_range()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -100,7 +115,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_validates_max_installments_range()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -120,7 +140,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_validates_fee_percent_range()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -140,7 +165,12 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_validates_statement_descriptor_format()
     {
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -161,14 +191,19 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_prevents_removing_active_sandbox_token()
     {
-        MercadoPagoSetting::factory()->create([
+        MercadoPagoSetting::create([
             'configuration_key' => 'default',
             'mode' => 'sandbox',
             'sandbox_public_key' => 'TEST-123',
             'sandbox_access_token' => 'TEST-TOKEN',
         ]);
 
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [
@@ -190,14 +225,19 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_preserves_credentials_when_empty()
     {
-        MercadoPagoSetting::factory()->create([
+        MercadoPagoSetting::create([
             'configuration_key' => 'default',
             'mode' => 'sandbox',
             'sandbox_public_key' => 'EXISTING-KEY',
             'sandbox_access_token' => 'EXISTING-TOKEN',
         ]);
 
-        $admin = Admin::factory()->create();
+        $admin = Admin::create([
+            'name' => 'Test Admin',
+            'email' => 'test@example.com',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
         $this->actingAs($admin, 'admin');
 
         $response = $this->post(route('back.setting.payment.mercadopago.update'), [

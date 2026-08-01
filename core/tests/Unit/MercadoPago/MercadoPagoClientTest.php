@@ -2,6 +2,7 @@
 namespace Tests\Unit\MercadoPago;
 
 use App\Services\MercadoPago\MercadoPagoClient;
+use App\Services\MercadoPago\MercadoPagoMoney;
 use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
@@ -21,14 +22,9 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', null, 'idem-key-123');
 
@@ -48,20 +44,15 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', '10.5', 'idem-key-123');
 
         $request = $container[0]['request'];
         $body = json_decode((string) $request->getBody(), true);
-        
+
         $this->assertArrayHasKey('amount', $body);
         $this->assertEquals(10.50, $body['amount']);
     }
@@ -76,14 +67,9 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', '10', 'idem-key-456');
 
@@ -103,14 +89,9 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', null, 'idem-key-123');
 
@@ -131,14 +112,9 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', null, 'idem-key-123');
 
@@ -159,14 +135,9 @@ class MercadoPagoClientTest extends TestCase
         $handlerStack = HandlerStack::create($mock);
         $handlerStack->push($history);
 
-        $client = new class('fake-token', $handlerStack) extends MercadoPagoClient {
-            public function __construct(string $token, $handlerStack) {
-                parent::__construct($token);
-                $config = $this->client->getConfig();
-                $config['handler'] = $handlerStack;
-                $this->client = new Client($config);
-            }
-        };
+        $mockClient = new Client(['handler' => $handlerStack]);
+        $money = new MercadoPagoMoney();
+        $client = new MercadoPagoClient('fake-token', $mockClient, $money);
 
         $client->refund('pay-123', '10.5', 'idem-key-123');
 

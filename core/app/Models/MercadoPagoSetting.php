@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class MercadoPagoSetting extends Model
 {
     protected $table = 'mercadopago_settings';
 
     protected $fillable = [
-        'configuration_key',
         'mode',
         'sandbox_public_key',
         'sandbox_access_token',
@@ -57,4 +57,20 @@ class MercadoPagoSetting extends Model
         'reconciliation_enabled' => 'boolean',
         'binary_mode' => 'boolean',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Proteger o singleton: configuration_key deve ser sempre 'default'
+            if ($model->exists && $model->configuration_key !== 'default') {
+                Log::warning('Tentativa de alterar configuration_key do Mercado Pago', [
+                    'current' => $model->configuration_key,
+                    'admin_id' => auth('admin')->id(),
+                ]);
+                $model->configuration_key = 'default';
+            }
+        });
+    }
 }
