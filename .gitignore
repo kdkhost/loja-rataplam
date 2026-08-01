@@ -1,3 +1,5 @@
 core/vendor/
 core/database/sql/*.sql
 core/.phpunit.result.cache
+.sshpass
+.dbpass
