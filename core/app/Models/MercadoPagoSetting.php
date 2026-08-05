@@ -11,8 +11,6 @@ class MercadoPagoSetting extends Model
 
     protected $fillable = [
         'mode',
-        'sandbox_enabled',
-        'production_enabled',
         'sandbox_public_key',
         'sandbox_access_token',
         'sandbox_collector_id',

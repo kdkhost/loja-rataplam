@@ -3,6 +3,7 @@
 namespace App\Services\MercadoPago;
 
 use App\Exceptions\MercadoPagoConfigurationException;
+use App\Models\MercadoPagoSetting;
 
 class MercadoPagoFeatureGate
 {
@@ -54,6 +55,18 @@ class MercadoPagoFeatureGate
         return $this->evaluate($environment, true);
     }
 
+    public function readinessFor(MercadoPagoSetting $setting, string $environment, bool $requireGate = true): array
+    {
+        return $this->evaluateSetting($setting, $environment, $requireGate);
+    }
+
+    public function assertConfigurationReadyFor(MercadoPagoSetting $setting, string $environment): void
+    {
+        if (!$this->evaluateSetting($setting, $environment, false)['ready']) {
+            throw new MercadoPagoConfigurationException('Integração Mercado Pago indisponível.');
+        }
+    }
+
     private function assertReady(string $environment, bool $requireGate): void
     {
         if (!$this->evaluate($environment, $requireGate)['ready']) {
@@ -76,6 +89,22 @@ class MercadoPagoFeatureGate
                 return $result;
             }
 
+            return $this->evaluateSetting($setting, $environment, $requireGate);
+        } catch (\Throwable) {
+            $result['reasons'] = ['configuration_unreadable'];
+            return $result;
+        }
+    }
+
+    private function evaluateSetting(MercadoPagoSetting $setting, string $environment, bool $requireGate): array
+    {
+        $result = ['environment' => $environment, 'enabled' => false, 'ready' => false, 'reasons' => []];
+        if (!in_array($environment, ['sandbox', 'production'], true)) {
+            $result['reasons'][] = 'unknown_environment';
+            return $result;
+        }
+
+        try {
             $result['enabled'] = (bool) $setting->{$environment . '_enabled'};
             if ($requireGate && !$result['enabled']) {
                 $result['reasons'][] = 'gate_disabled';

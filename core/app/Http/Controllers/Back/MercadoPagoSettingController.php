@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\MercadoPagoSettingRequest;
 use App\Models\MercadoPagoSetting;
 use App\Services\MercadoPago\MercadoPagoFeatureGate;
+use App\Services\MercadoPago\MercadoPagoActivationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MercadoPagoSettingController extends Controller
 {
-    public function __construct(protected MercadoPagoFeatureGate $featureGate)
+    public function __construct(protected MercadoPagoActivationService $activationService)
     {
         $this->middleware('auth:admin');
         $this->middleware('adminlocalize');
@@ -66,16 +67,8 @@ class MercadoPagoSettingController extends Controller
 
     public function activate(string $environment)
     {
-        abort_unless(in_array($environment, ['sandbox', 'production'], true), 404);
         try {
-            $this->featureGate->assertConfigurationReady($environment);
-            DB::transaction(function () use ($environment) {
-                $settings = MercadoPagoSetting::where('configuration_key', 'default')->lockForUpdate()->firstOrFail();
-                $settings->mode = $environment;
-                $settings->sandbox_enabled = $environment === 'sandbox';
-                $settings->production_enabled = $environment === 'production';
-                $settings->save();
-            });
+            $this->activationService->activate($environment);
             return redirect()->back()->withSuccess('Ambiente Mercado Pago ativado explicitamente.');
         } catch (\Throwable $exception) {
             Log::warning('Mercado Pago: ativação rejeitada', [
@@ -89,8 +82,7 @@ class MercadoPagoSettingController extends Controller
 
     public function deactivate(string $environment)
     {
-        abort_unless(in_array($environment, ['sandbox', 'production'], true), 404);
-        MercadoPagoSetting::where('configuration_key', 'default')->update([$environment . '_enabled' => false]);
+        $this->activationService->deactivate($environment);
         return redirect()->back()->withSuccess('Ambiente Mercado Pago desativado.');
     }
 }
