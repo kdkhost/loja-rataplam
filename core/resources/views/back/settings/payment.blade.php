@@ -695,18 +695,11 @@
 
                                                                     @csrf
 
-                                                                    <div class="form-group">
-                                                                        <label class="switch-primary">
-                                                                            <input type="checkbox"
-                                                                                class="switch switch-bootstrap "
-                                                                                name="status" value="1"
-                                                                                {{ $mercadopago->status == 1 ? 'checked' : '' }}>
-                                                                            <span class="switch-body"></span>
-                                                                            <span class="switch-text">Exibir Mercado Pago</span>
-                                                                        </label>
+                                                                    <div class="alert alert-info">
+                                                                        Salvar esta configuração não ativa o gateway. Sandbox e produção exigem ativação explícita e independente.
                                                                     </div>
 
-                                                                    <div class="image-show {{ $mercadopago->status == 1 ? '' : 'd-none' }}">
+                                                                    <div class="image-show">
 
                                                                         <div class="form-group col-xl-12">
                                                                             <label for="name">{{ __('Current Image') }}</label>
@@ -1096,6 +1089,16 @@
                                                                     </div>
 
                                                                 </form>
+
+                                                                @foreach (['sandbox' => 'Sandbox', 'production' => 'Produção'] as $environment => $label)
+                                                                    @php($enabled = (bool) ($mercadopagoAdminConfig[$environment . '_enabled'] ?? false))
+                                                                    <form class="d-inline-block mr-2" method="POST" action="{{ route('back.setting.payment.mercadopago.' . ($enabled ? 'deactivate' : 'activate'), $environment) }}">
+                                                                        @csrf
+                                                                        <button type="submit" class="btn {{ $enabled ? 'btn-danger' : 'btn-success' }}">
+                                                                            {{ $enabled ? 'Desativar' : 'Ativar' }} {{ $label }}
+                                                                        </button>
+                                                                    </form>
+                                                                @endforeach
 
                                                             </div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Exceptions\InvalidMercadoPagoWebhookSignatureException;
 use App\Exceptions\MercadoPagoApiException;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
+use App\Services\MercadoPago\MercadoPagoFeatureGate;
 use App\Services\MercadoPago\MercadoPagoWebhookService;
 use App\Services\MercadoPago\MercadoPagoWebhookSignatureValidator;
 use Illuminate\Http\JsonResponse;
@@ -16,12 +17,19 @@ class MercadoPagoWebhookController
     public function __construct(
         protected MercadoPagoWebhookService $webhookService,
         protected MercadoPagoWebhookSignatureValidator $signatureValidator,
-        protected MercadoPagoConfigResolver $configResolver
+        protected MercadoPagoConfigResolver $configResolver,
+        protected MercadoPagoFeatureGate $featureGate
     ) {}
 
     public function handle(Request $request): JsonResponse
     {
+        $environment = $this->featureGate->requestedEnvironment();
+        if ($environment === null) {
+            return response()->json(['error' => 'Service unavailable'], 503);
+        }
+
         try {
+            $this->featureGate->assertWebhookEnabled($environment);
             $dataId = $this->resolveSignedDataId($request);
             $requestId = $request->header('x-request-id');
             $credentials = $this->configResolver->resolveBackendCredentials();
