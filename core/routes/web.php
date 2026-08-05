@@ -477,8 +477,7 @@ Route::group(['middleware' => 'maintainance'], function () {
         Route::post('/razorpay/submit', 'Payment\RazorpayController@store')->name('front.razorpay.submit');
         Route::post('/flutterwave/notify', 'Payment\FlutterwaveController@notify')->name('front.flutterwave.notify');
         Route::post('/flutterwave/submit', 'Payment\FlutterwaveController@store')->name('front.flutterwave.submit');
-        Route::post('/mercadopago/submit', 'Payment\MercadopagoController@store')->name('front.mercadopago.submit');
-        Route::post('/mercadopago/webhook', 'Payment\MercadopagoController@webhook')->name('front.mercadopago.webhook');
+        Route::post('/mercadopago/submit', 'Payment\MercadopagoController@store')->middleware('auth')->name('front.mercadopago.submit');
         Route::post('/mercadopago/webhook/v2', 'Front\MercadoPagoWebhookController@handle')->name('front.mercadopago.webhook.v2');
         Route::post('/authorize/submit', 'Payment\AuthorizeController@store')->name('front.authorize.submit');
 

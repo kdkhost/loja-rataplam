@@ -16,7 +16,6 @@ class VerifyCsrfToken extends Middleware
         '/sslcommerz/notify',
         'razorpay/notify',
         'flutterwave/notify',
-        '/mercadopago/webhook',
         '/mercadopago/webhook/v2',
         '/admin/summernote/image/upload',
         '/admin/menu/update',
