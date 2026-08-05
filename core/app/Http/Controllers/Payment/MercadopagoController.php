@@ -18,6 +18,8 @@ use App\Models\ShippingService;
 use App\Models\State;
 use App\Models\TrackOrder;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
+use App\Services\MercadoPago\MercadoPagoCheckoutCalculator;
+use App\Services\MercadoPago\MercadoPagoMoney;
 use App\Services\MercadoPago\MercadoPagoPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -32,7 +34,9 @@ class MercadopagoController extends Controller
 {
     public function __construct(
         protected MercadoPagoPaymentService $paymentService,
-        protected MercadoPagoConfigResolver $configResolver
+        protected MercadoPagoConfigResolver $configResolver,
+        protected MercadoPagoCheckoutCalculator $checkoutCalculator,
+        protected MercadoPagoMoney $money
     ) {}
 
     public function store(Request $request)
@@ -107,7 +111,7 @@ class MercadopagoController extends Controller
             abort(422, 'Moeda invalida para o Mercado Pago.');
         }
 
-        $authoritativeAmount = number_format((float) $checkout['total_amount'], 2, '.', '');
+        $authoritativeAmount = $this->money->centsToDecimal($checkout['total_minor']);
         $order = $this->resolvePendingOrder($request, $checkout, $paymentType, $authoritativeAmount);
 
         try {
@@ -115,6 +119,7 @@ class MercadopagoController extends Controller
                 'order_id' => $order->id,
                 'user_id' => Auth::id(),
                 'authoritative_amount' => $authoritativeAmount,
+                'currency' => 'BRL',
                 'description' => Setting::first()->title . ' - Pedido ' . $order->id,
                 'payer_email' => $request->input('bill_email') ?: EmailHelper::getEmail(),
                 'installments' => (int) $request->input('installments', 1),
@@ -420,56 +425,33 @@ class MercadopagoController extends Controller
     protected function checkoutAmounts(Request $request, array $settings, string $paymentType)
     {
         $cart = Session::get('cart');
-        $totalTax = 0;
-        $cartTotal = 0;
-        $total = 0;
-        $optionPrice = 0;
-
-        foreach ($cart as $key => $items) {
-            $total += $items['main_price'] * $items['qty'];
-            $optionPrice += $items['attribute_price'];
-            $cartTotal = $total + $optionPrice;
-            $item = Item::findOrFail($key);
-
-            if ($item->tax) {
-                $totalTax += $item::taxCalculate($item) * $items['qty'];
-            }
-        }
-
         $shipping = PriceHelper::Digital() ? ShippingService::findOrFail($request['shipping_id']) : null;
         $discount = Session::has('coupon') ? Session::get('coupon') : [];
-        $statePrice = PriceHelper::StatePrce($request->state_id, $cartTotal);
-        $grandTotal = ($cartTotal + ($shipping ? $shipping->price : 0)) + $totalTax;
-        $grandTotal = $grandTotal - ($discount ? $discount['discount'] : 0);
-        $grandTotal += $statePrice;
-        $gatewayFee = $this->gatewayFee($grandTotal, $settings, $paymentType);
-        $chargeTotal = $grandTotal + $gatewayFee;
+        $couponId = data_get($discount, 'code.id');
+        $coupon = $couponId ? PromoCode::findOrFail($couponId) : null;
+        $state = $request->state_id ? State::findOrFail($request->state_id) : null;
+        $calculated = $this->checkoutCalculator->calculate(
+            $cart,
+            $shipping,
+            $coupon,
+            $state,
+            $this->activeCurrency(),
+            $settings
+        );
 
         return [
             'cart' => $cart,
             'discount' => $discount,
             'shipping' => $shipping,
-            'total_tax' => $totalTax,
-            'cart_total' => $cartTotal,
-            'state_price' => $statePrice,
-            'gateway_fee' => $gatewayFee,
-            'grand_total' => $grandTotal,
-            'charge_total' => $chargeTotal,
-            'total_amount' => PriceHelper::setConvertPrice($chargeTotal),
+            'total_tax' => $this->money->centsToDecimal($calculated['tax']),
+            'cart_total' => $this->money->centsToDecimal($calculated['subtotal']),
+            'state_price' => $this->money->centsToDecimal($calculated['stateMinor']),
+            'gateway_fee' => $this->money->centsToDecimal($calculated['feeMinor']),
+            'grand_total' => $calculated['totalDecimal'],
+            'charge_total' => $calculated['totalDecimal'],
+            'total_amount' => $calculated['totalDecimal'],
+            'total_minor' => $calculated['totalMinor'],
         ];
-    }
-
-    protected function gatewayFee(float $amount, array $settings, string $paymentType)
-    {
-        if ((int) ($settings['fee_pass_to_customer'] ?? 0) !== 1) {
-            return 0;
-        }
-
-        $percent = max(0, (float) ($settings['fee_percent'] ?? 0));
-        $fixed = max(0, (float) ($settings['fee_fixed'] ?? 0));
-        $fee = (($amount * $percent) / 100) + $fixed;
-
-        return round($fee, 2);
     }
 
     protected function createPayment(Request $request, array $settings, array $checkout, string $paymentType)
@@ -477,7 +459,7 @@ class MercadopagoController extends Controller
         MercadoPago\SDK::setAccessToken($settings['token']);
 
         $payment = new MercadoPago\Payment();
-        $payment->transaction_amount = (float) $checkout['total_amount'];
+        $payment->transaction_amount = $checkout['total_amount'];
         $payment->description = Setting::first()->title . ' - Pedido';
         $payment->external_reference = 'RTP-' . Carbon::now()->format('YmdHis') . '-' . Str::upper(Str::random(6));
         $payment->notification_url = route('front.mercadopago.webhook');
@@ -592,7 +574,7 @@ class MercadopagoController extends Controller
         $this->sendOrderEmail($order, $checkout['total_amount']);
     }
 
-    protected function sendOrderEmail(Order $order, float $totalAmount)
+    protected function sendOrderEmail(Order $order, string $totalAmount)
     {
         $user = Auth::user();
         $emailData = [

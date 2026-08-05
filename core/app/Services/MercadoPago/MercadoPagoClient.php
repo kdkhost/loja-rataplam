@@ -106,6 +106,14 @@ class MercadoPagoClient
 
     public function createPayment(array $payload, string $idempotencyKey): MercadoPagoResponse
     {
+        if (!isset($payload['transaction_amount']) || !is_string($payload['transaction_amount'])) {
+            throw new MercadoPagoApiException('Valor canonico do pagamento ausente.');
+        }
+
+        // Fronteira inevitavel da API do SDK 2.5.3: o dominio entrega uma
+        // string decimal exata e somente o adaptador serializa como numero.
+        $payload['transaction_amount'] = $this->apiNumericAmount($payload['transaction_amount']);
+
         return $this->request('POST', '/v1/payments', [
             'json' => $payload,
             'headers' => [
@@ -134,7 +142,7 @@ class MercadoPagoClient
 
         if ($amount !== null) {
             $cents = $this->money->decimalToCents($amount);
-            $apiAmount = $this->money->centsToApiAmount($cents);
+            $apiAmount = $this->apiNumericAmount($this->money->centsToApiAmount($cents));
             $options['json'] = ['amount' => $apiAmount];
         }
 
@@ -153,5 +161,15 @@ class MercadoPagoClient
     public function getPaymentMethods(): MercadoPagoResponse
     {
         return $this->request('GET', '/v1/payment_methods');
+    }
+
+    private function apiNumericAmount(string $canonicalAmount): float
+    {
+        $numeric = (float) $canonicalAmount;
+        if (number_format($numeric, 2, '.', '') !== $canonicalAmount) {
+            throw new MercadoPagoApiException('Valor perdeu precisao na serializacao da API.');
+        }
+
+        return $numeric;
     }
 }
