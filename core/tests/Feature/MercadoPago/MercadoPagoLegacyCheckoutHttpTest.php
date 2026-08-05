@@ -4,6 +4,7 @@ namespace Tests\Feature\MercadoPago;
 
 use App\Models\User;
 use App\Services\MercadoPago\MercadoPagoLegacyClient;
+use App\Services\MercadoPago\MercadoPagoPaymentService;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\MercadoPago\CreatesMercadoPagoTestSchema;
 use Tests\TestCase;
@@ -56,6 +57,10 @@ class MercadoPagoLegacyCheckoutHttpTest extends TestCase
             $payment->status_detail = 'cc_rejected_other_reason';
         });
         $this->app->instance(MercadoPagoLegacyClient::class, $client);
+        $v2 = $this->createMock(MercadoPagoPaymentService::class);
+        $v2->expects($this->never())->method('createPixPayment');
+        $v2->expects($this->never())->method('createCardPayment');
+        $this->app->instance(MercadoPagoPaymentService::class, $v2);
 
         $response = $this->actingAs(User::findOrFail(30))->withSession([
             'cart'=>[1=>['qty'=>1,'main_price'=>'10.50','attribute_price'=>0,'options_id'=>[],'type'=>'digital','item_type'=>'digital']],
@@ -69,5 +74,6 @@ class MercadoPagoLegacyCheckoutHttpTest extends TestCase
         $this->assertSame('visa', $this->capturedPayment->payment_method_id);
         $this->assertDatabaseCount('mercadopago_actions', 0);
         $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseMissing('mercadopago_settings', ['sandbox_enabled' => true]);
     }
 }

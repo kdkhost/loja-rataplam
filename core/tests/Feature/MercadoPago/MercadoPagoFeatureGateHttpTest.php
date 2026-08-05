@@ -6,6 +6,8 @@ use App\Http\Controllers\Payment\MercadopagoLegacyController;
 use App\Http\Controllers\Payment\MercadopagoV2Controller;
 use App\Models\MercadoPagoSetting;
 use App\Models\User;
+use App\Services\MercadoPago\MercadoPagoClient;
+use App\Services\MercadoPago\MercadoPagoLegacyClient;
 use Mockery;
 use Tests\Support\MercadoPago\CreatesMercadoPagoTestSchema;
 use Tests\TestCase;
@@ -52,6 +54,24 @@ class MercadoPagoFeatureGateHttpTest extends TestCase
         $this->setting(['sandbox_enabled'=>true]);
         $this->bindControllers(legacyCalls: 0, v2Calls: 1);
         $this->actingAs(User::first())->post('/mercadopago/submit')->assertOk()->assertJson(['flow'=>'v2']);
+    }
+
+    public function test_incomplete_v2_fails_closed_through_real_dispatcher_without_fallback_or_writes(): void
+    {
+        $this->setting(['sandbox_enabled'=>true,'sandbox_access_token'=>null]);
+        \DB::table('payment_settings')->insert([
+            'unique_keyword'=>'mercadopago', 'information'=>json_encode(['token'=>'legacy-synthetic']), 'status'=>1,
+        ]);
+        $legacy = $this->createMock(MercadoPagoLegacyClient::class);
+        $legacy->expects($this->never())->method('configure');
+        $this->app->instance(MercadoPagoLegacyClient::class, $legacy);
+        $v2 = $this->createMock(MercadoPagoClient::class);
+        $v2->expects($this->never())->method('createPayment');
+        $this->app->instance(MercadoPagoClient::class, $v2);
+
+        $this->actingAs(User::first())->post('/mercadopago/submit')->assertStatus(503);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('mercadopago_actions', 0);
     }
 
     private function bindControllers(int $legacyCalls, int $v2Calls): array
