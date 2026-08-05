@@ -26,10 +26,7 @@ class MercadoPagoPaymentService
 
     protected function getAccessToken(): string
     {
-        $config = $this->configResolver->resolve();
-        return $config['mode'] === 'production'
-            ? $config['production_access_token']
-            : $config['sandbox_access_token'];
+        return $this->configResolver->resolveBackendCredentials()->accessToken;
     }
 
     protected function ensureClient(): void
@@ -87,7 +84,7 @@ class MercadoPagoPaymentService
             'environment' => $config['mode'],
             'order_id' => $orderData['order_id'] ?? null,
             'payment_id' => null,
-            'requested_amount' => $cents,
+            'requested_amount' => $amount,
             'currency' => 'BRL',
         ]);
 
@@ -108,7 +105,7 @@ class MercadoPagoPaymentService
                     'email' => $this->sanitizeEmail($orderData['payer_email'] ?? 'customer@example.com'),
                 ],
                 'external_reference' => $orderData['order_id'] ?? null,
-                'notification_url' => $config['notification_url'] ?? null,
+                'notification_url' => $config['notification_url'] ?? route('front.mercadopago.webhook.v2'),
                 'metadata' => [
                     'order_id' => $orderData['order_id'] ?? null,
                 ],
@@ -196,7 +193,7 @@ class MercadoPagoPaymentService
             'environment' => $config['mode'],
             'order_id' => $orderData['order_id'] ?? null,
             'payment_id' => null,
-            'requested_amount' => $cents,
+            'requested_amount' => $amount,
             'currency' => 'BRL',
         ]);
 
@@ -222,7 +219,7 @@ class MercadoPagoPaymentService
                 ],
                 'installments' => $installments,
                 'external_reference' => $orderData['order_id'] ?? null,
-                'notification_url' => $config['notification_url'] ?? null,
+                'notification_url' => $config['notification_url'] ?? route('front.mercadopago.webhook.v2'),
                 'metadata' => [
                     'order_id' => $orderData['order_id'] ?? null,
                 ],
@@ -312,7 +309,11 @@ class MercadoPagoPaymentService
     {
         // Em produção, isso consultaria o banco de dados
         // Para sandbox, usamos o valor fornecido com validação
-        $amount = $orderData['amount'] ?? '0.00';
+        if (!array_key_exists('authoritative_amount', $orderData)) {
+            throw new MercadoPagoApiException('Valor autoritativo do pedido ausente.');
+        }
+
+        $amount = (string) $orderData['authoritative_amount'];
 
         if (!preg_match('/^\d+(\.\d{1,2})?$/', $amount)) {
             throw new MercadoPagoApiException('Valor do pedido inválido.');
@@ -371,16 +372,17 @@ class MercadoPagoPaymentService
     protected function generateIdempotencyKey(string $type, array $orderData, ?array $cardData = null): string
     {
         $components = [
-            $type,
-            $orderData['order_id'] ?? '',
-            $orderData['amount'] ?? '',
+            'action' => $type,
+            'order_id' => $orderData['order_id'] ?? '',
+            'user_id' => $orderData['user_id'] ?? '',
+            'amount' => $orderData['authoritative_amount'] ?? '',
         ];
 
         if ($cardData !== null) {
-            $components[] = $cardData['payment_method_id'] ?? '';
-            $components[] = $cardData['installments'] ?? '1';
+            $components['payment_method_id'] = $cardData['payment_method_id'] ?? '';
+            $components['installments'] = $cardData['installments'] ?? '1';
         }
 
-        return hash('sha256', implode('|', $components));
+        return $this->idempotencyService->generateDeterministicKey($components);
     }
 }

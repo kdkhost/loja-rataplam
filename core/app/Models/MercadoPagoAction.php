@@ -39,6 +39,7 @@ class MercadoPagoAction extends Model
         'response_summary' => 'array',
         'execution_started_at' => 'datetime',
         'execution_lease_expires_at' => 'datetime',
+        'pix_expiration_date' => 'datetime',
     ];
 
     /**

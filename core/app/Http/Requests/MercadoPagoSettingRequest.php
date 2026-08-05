@@ -21,11 +21,13 @@ class MercadoPagoSettingRequest extends FormRequest
             'mode' => 'required|in:sandbox,production',
             'sandbox_public_key' => 'nullable|string|max:255',
             'sandbox_access_token' => 'nullable|string|max:255',
+            'sandbox_collector_id' => 'nullable|string|max:255|regex:/^[A-Za-z0-9_-]+$/',
             'remove_sandbox_token' => 'nullable|boolean',
             'sandbox_webhook_secret' => 'nullable|string|max:255',
             'remove_sandbox_secret' => 'nullable|boolean',
             'production_public_key' => 'nullable|string|max:255',
             'production_access_token' => 'nullable|string|max:255',
+            'production_collector_id' => 'nullable|string|max:255|regex:/^[A-Za-z0-9_-]+$/',
             'remove_production_token' => 'nullable|boolean',
             'production_webhook_secret' => 'nullable|string|max:255',
             'remove_production_secret' => 'nullable|boolean',
@@ -164,6 +166,10 @@ class MercadoPagoSettingRequest extends FormRequest
                 $validator->errors()->add('sandbox_access_token', 'Gateway ativo em sandbox exige Access Token.');
             }
 
+            if ($isActive && $mode === 'sandbox' && empty($this->input('sandbox_collector_id', $settings?->sandbox_collector_id))) {
+                $validator->errors()->add('sandbox_collector_id', 'Gateway ativo em sandbox exige o Collector ID da conta recebedora.');
+            }
+
             // Validação individual: gateway ativo em produção exige Public Key
             if ($isActive && $mode === 'production' && empty($productionPublicKey)) {
                 $validator->errors()->add('production_public_key', 'Gateway ativo em produção exige Public Key.');
@@ -172,6 +178,10 @@ class MercadoPagoSettingRequest extends FormRequest
             // Validação individual: gateway ativo em produção exige Access Token
             if ($isActive && $mode === 'production' && empty($productionAccessToken)) {
                 $validator->errors()->add('production_access_token', 'Gateway ativo em produção exige Access Token.');
+            }
+
+            if ($isActive && $mode === 'production' && empty($this->input('production_collector_id', $settings?->production_collector_id))) {
+                $validator->errors()->add('production_collector_id', 'Gateway ativo em producao exige o Collector ID da conta recebedora.');
             }
 
             // Modo signed exige segredo efetivo do ambiente selecionado

@@ -771,6 +771,15 @@
                                                                                     autocomplete="new-password">
                                                                             </div>
 
+                                                                            <div class="form-group">
+                                                                                <label for="sandbox_collector_id">Collector ID Sandbox</label>
+                                                                                <input type="text" class="form-control"
+                                                                                    id="sandbox_collector_id"
+                                                                                    name="sandbox_collector_id"
+                                                                                    value="{{ $mercadopagoAdminConfig['sandbox_collector_id'] ?? '' }}"
+                                                                                    autocomplete="off">
+                                                                            </div>
+
                                                                             <div class="small text-muted mb-2">
                                                                                 Status: {{ $mercadopagoAdminConfig['sandbox_token_configured'] ?? false ? 'Credencial configurada' : 'Credencial não configurada' }}
                                                                             </div>
@@ -830,6 +839,15 @@
                                                                                     placeholder="Cole o token aqui"
                                                                                     value=""
                                                                                     autocomplete="new-password">
+                                                                            </div>
+
+                                                                            <div class="form-group">
+                                                                                <label for="production_collector_id">Collector ID ProduÃ§Ã£o</label>
+                                                                                <input type="text" class="form-control"
+                                                                                    id="production_collector_id"
+                                                                                    name="production_collector_id"
+                                                                                    value="{{ $mercadopagoAdminConfig['production_collector_id'] ?? '' }}"
+                                                                                    autocomplete="off">
                                                                             </div>
 
                                                                             <div class="small text-muted mb-2">

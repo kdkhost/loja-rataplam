@@ -1,6 +1,7 @@
 <?php
 namespace App\Services\MercadoPago;
 
+use App\Exceptions\MercadoPagoConfigurationException;
 use App\Models\MercadoPagoSetting;
 use App\Models\PaymentSetting;
 use Illuminate\Support\Facades\Log;
@@ -86,6 +87,10 @@ class MercadoPagoConfigResolver
             $secret = $mode === 'production' ? $settings->production_webhook_secret : $settings->sandbox_webhook_secret;
             $collectorId = $mode === 'production' ? $settings->production_collector_id : $settings->sandbox_collector_id;
 
+            if (empty($pubKey) || empty($token)) {
+                throw new MercadoPagoConfigurationException('Credenciais do Mercado Pago nao configuradas para o ambiente ativo.');
+            }
+
             return new MercadoPagoCredentials(
                 publicKey: $pubKey,
                 accessToken: $token,
@@ -122,7 +127,9 @@ class MercadoPagoConfigResolver
             return [
                 'mode' => $settings->mode,
                 'sandbox_public_key' => $settings->sandbox_public_key,
+                'sandbox_collector_id' => $settings->sandbox_collector_id,
                 'production_public_key' => $settings->production_public_key,
+                'production_collector_id' => $settings->production_collector_id,
                 'webhook_validation_mode' => $settings->webhook_validation_mode,
                 'pix_enabled' => $settings->pix_enabled,
                 'credit_card_enabled' => $settings->credit_card_enabled,
@@ -157,7 +164,9 @@ class MercadoPagoConfigResolver
             return [
                 'mode' => $isSandbox ? 'sandbox' : 'production',
                 'sandbox_public_key' => $isSandbox ? ($info['public_key'] ?? null) : null,
+                'sandbox_collector_id' => null,
                 'production_public_key' => !$isSandbox ? ($info['public_key'] ?? null) : null,
+                'production_collector_id' => null,
                 'webhook_validation_mode' => 'api_lookup',
                 'pix_enabled' => isset($info['pix_enabled']) && $info['pix_enabled'] == 1,
                 'credit_card_enabled' => isset($info['credit_card_enabled']) && $info['credit_card_enabled'] == 1,

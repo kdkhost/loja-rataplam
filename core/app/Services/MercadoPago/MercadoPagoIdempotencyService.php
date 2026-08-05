@@ -15,6 +15,20 @@ class MercadoPagoIdempotencyService
         return Str::uuid()->toString();
     }
 
+    public function generateDeterministicKey(array $components): string
+    {
+        $canonical = json_encode($this->canonicalize($components), JSON_UNESCAPED_SLASHES);
+        $hex = substr(hash('sha256', $canonical), 0, 32);
+        $hex[12] = '5';
+        $hex[16] = dechex((hexdec($hex[16]) & 0x3) | 0x8);
+
+        return substr($hex, 0, 8) . '-'
+            . substr($hex, 8, 4) . '-'
+            . substr($hex, 12, 4) . '-'
+            . substr($hex, 16, 4) . '-'
+            . substr($hex, 20, 12);
+    }
+
     public function generateFingerprint(array $data): string
     {
         // Allowlist de campos não sensíveis
@@ -206,12 +220,12 @@ class MercadoPagoIdempotencyService
         }
 
         // Comparar order_id se ambos existirem
-        if ($existing->order_id && $newOrderId && $existing->order_id !== $newOrderId) {
+        if ($existing->order_id && $newOrderId && (string) $existing->order_id !== (string) $newOrderId) {
             return true;
         }
 
         // Comparar payment_id se ambos existirem
-        if ($existing->payment_id && $newPaymentId && $existing->payment_id !== $newPaymentId) {
+        if ($existing->payment_id && $newPaymentId && (string) $existing->payment_id !== (string) $newPaymentId) {
             return true;
         }
 
@@ -220,6 +234,10 @@ class MercadoPagoIdempotencyService
 
     public function completeAction(MercadoPagoAction $action, MercadoPagoResponse $response, ?string $executionOwner = null): void
     {
+        $operationId = $action->action === 'webhook_notification'
+            ? $action->mercadopago_operation_id
+            : ($response->data['id'] ?? null);
+
         // Política: não converter success novamente para failed ou pending
         if ($action->local_status === 'success') {
             return;
@@ -242,7 +260,7 @@ class MercadoPagoIdempotencyService
                         'http_status' => $response->httpStatus,
                         'error_code' => $response->errorCode,
                         'remote_status' => $response->data['status'] ?? null,
-                        'mercadopago_operation_id' => $response->data['id'] ?? null,
+                        'mercadopago_operation_id' => $operationId,
                         'response_summary' => [
                             'safe_message' => $response->safeMessage,
                             'request_id' => $response->requestId,
@@ -260,7 +278,7 @@ class MercadoPagoIdempotencyService
                 $action->http_status = $response->httpStatus;
                 $action->error_code = $response->errorCode;
                 $action->remote_status = $response->data['status'] ?? null;
-                $action->mercadopago_operation_id = $response->data['id'] ?? null;
+                $action->mercadopago_operation_id = $operationId;
                 $action->response_summary = [
                     'safe_message' => $response->safeMessage,
                     'request_id' => $response->requestId,
