@@ -28,6 +28,14 @@ trait CreatesMercadoPagoTestSchema
         Schema::dropIfExists('menus');
         Schema::dropIfExists('languages');
         Schema::dropIfExists('orders');
+        Schema::dropIfExists('attribute_options');
+        Schema::dropIfExists('items');
+        Schema::dropIfExists('taxes');
+        Schema::dropIfExists('shipping_services');
+        Schema::dropIfExists('states');
+        Schema::dropIfExists('currencies');
+        Schema::dropIfExists('promo_codes');
+        Schema::dropIfExists('users');
         Schema::dropIfExists('admins');
 
         // Create languages table (required by adminlocalize middleware)
@@ -59,6 +67,70 @@ trait CreatesMercadoPagoTestSchema
             $table->boolean('status')->default(0);
             $table->text('text')->nullable();
             $table->string('photo')->nullable();
+            $table->string('title')->nullable();
+            $table->boolean('is_single_checkout')->default(false);
+            $table->boolean('is_maintainance')->default(false);
+            $table->timestamps();
+        });
+
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->rememberToken();
+            $table->timestamps();
+        });
+        Schema::create('currencies', function (Blueprint $table) {
+            $table->id();
+            $table->string('name', 3);
+            $table->string('sign')->nullable();
+            $table->decimal('value', 12, 8)->default(1);
+            $table->boolean('is_default')->default(true);
+            $table->boolean('status')->default(true);
+        });
+        Schema::create('taxes', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->nullable();
+            $table->decimal('value', 8, 4)->default(0);
+            $table->boolean('status')->default(true);
+        });
+        Schema::create('items', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->nullable();
+            $table->decimal('discount_price', 12, 2);
+            $table->unsignedBigInteger('tax_id')->nullable();
+            $table->timestamps();
+        });
+        Schema::create('attribute_options', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('attribute_id')->nullable();
+            $table->string('name')->nullable();
+            $table->decimal('price', 12, 2)->default(0);
+            $table->integer('stock')->nullable();
+        });
+        Schema::create('shipping_services', function (Blueprint $table) {
+            $table->id();
+            $table->string('title')->nullable();
+            $table->decimal('price', 12, 2)->default(0);
+            $table->boolean('status')->default(true);
+        });
+        Schema::create('states', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->nullable();
+            $table->decimal('price', 12, 4)->default(0);
+            $table->string('type')->default('fixed');
+            $table->boolean('status')->default(true);
+        });
+        Schema::create('promo_codes', function (Blueprint $table) {
+            $table->id();
+            $table->string('title')->nullable();
+            $table->string('code_name')->nullable();
+            $table->decimal('discount', 12, 4)->default(0);
+            $table->string('type')->default('amount');
+            $table->boolean('status')->default(true);
+            $table->integer('no_of_times')->default(1);
             $table->timestamps();
         });
 
@@ -89,6 +161,20 @@ trait CreatesMercadoPagoTestSchema
             $table->string('payment_status')->default('pending');
             $table->text('payment_details')->nullable();
             $table->string('state_price')->nullable();
+            $table->text('cart')->nullable();
+            $table->text('discount')->nullable();
+            $table->text('shipping')->nullable();
+            $table->string('payment_method')->nullable();
+            $table->string('txnid')->nullable();
+            $table->string('transaction_number')->nullable();
+            $table->string('order_status')->nullable();
+            $table->string('gateway_fee')->nullable();
+            $table->string('currency_sign')->nullable();
+            $table->string('currency_value')->nullable();
+            $table->text('shipping_info')->nullable();
+            $table->text('billing_info')->nullable();
+            $table->text('state')->nullable();
+            $table->string('tax')->nullable();
             $table->timestamps();
         });
 
@@ -198,6 +284,14 @@ trait CreatesMercadoPagoTestSchema
         Schema::dropIfExists('menus');
         Schema::dropIfExists('languages');
         Schema::dropIfExists('orders');
+        Schema::dropIfExists('attribute_options');
+        Schema::dropIfExists('items');
+        Schema::dropIfExists('taxes');
+        Schema::dropIfExists('shipping_services');
+        Schema::dropIfExists('states');
+        Schema::dropIfExists('currencies');
+        Schema::dropIfExists('promo_codes');
+        Schema::dropIfExists('users');
         Schema::dropIfExists('admins');
     }
 }

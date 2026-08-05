@@ -93,12 +93,12 @@ class MercadoPagoMoneyTest extends TestCase
 
     public function test_cents_to_api_amount_integer()
     {
-        $this->assertEquals(1, $this->money->centsToApiAmount(100));
+        $this->assertSame('1.00', $this->money->centsToApiAmount(100));
     }
 
     public function test_cents_to_api_amount_decimal()
     {
-        $this->assertEquals(10.50, $this->money->centsToApiAmount(1050));
+        $this->assertSame('10.50', $this->money->centsToApiAmount(1050));
     }
 
     public function test_cents_to_api_amount_rejects_negative()
@@ -182,5 +182,27 @@ class MercadoPagoMoneyTest extends TestCase
     {
         $this->expectException(\InvalidArgumentException::class);
         $this->money->decimalToCents('invalid');
+    }
+
+    public function test_integer_arithmetic_covers_classic_float_problem(): void
+    {
+        $this->assertSame(30, $this->money->add(
+            $this->money->decimalToCents('0.10'),
+            $this->money->decimalToCents('0.20')
+        ));
+        $this->assertSame('0.30', $this->money->centsToDecimal(30));
+    }
+
+    public function test_quantity_percentage_and_decimal_multiplier_are_integer_based(): void
+    {
+        $this->assertSame(3150, $this->money->multiplyQuantity(1050, 3));
+        $this->assertSame(315, $this->money->percentageOf(3150, '10.0000'));
+        $this->assertSame(3465, $this->money->multiplyByDecimal(3150, '1.10000000'));
+    }
+
+    public function test_add_detects_overflow(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->money->add(PHP_INT_MAX, 1);
     }
 }
