@@ -4,28 +4,24 @@ namespace App\Http\Controllers\Payment;
 
 use App\Helpers\EmailHelper;
 use App\Helpers\PriceHelper;
-use App\Helpers\SmsHelper;
 use App\Http\Controllers\Controller;
-use App\Jobs\EmailSendJob;
-use App\Models\Currency;
-use App\Models\Item;
-use App\Models\Notification;
 use App\Models\Order;
 use App\Models\PromoCode;
 use App\Models\Setting;
 use App\Models\ShippingService;
 use App\Models\State;
-use App\Models\TrackOrder;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
 use App\Services\MercadoPago\MercadoPagoCheckoutCalculator;
+use App\Services\MercadoPago\MercadoPagoCheckoutInput;
+use App\Services\MercadoPago\MercadoPagoFeatureGate;
 use App\Services\MercadoPago\MercadoPagoMoney;
+use App\Services\MercadoPago\MercadoPagoOrderSideEffects;
 use App\Services\MercadoPago\MercadoPagoPaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
 use Throwable;
 
 class MercadopagoV2Controller extends Controller
@@ -34,7 +30,10 @@ class MercadopagoV2Controller extends Controller
         protected MercadoPagoPaymentService $paymentService,
         protected MercadoPagoConfigResolver $configResolver,
         protected MercadoPagoCheckoutCalculator $checkoutCalculator,
-        protected MercadoPagoMoney $money
+        protected MercadoPagoMoney $money,
+        protected MercadoPagoCheckoutInput $checkoutInput,
+        protected MercadoPagoOrderSideEffects $orderSideEffects,
+        protected MercadoPagoFeatureGate $featureGate
     ) {}
 
     public function store(Request $request)
@@ -43,12 +42,12 @@ class MercadopagoV2Controller extends Controller
             abort(401);
         }
 
-        $this->validateCheckout($request);
+        $this->checkoutInput->validate($request);
         PriceHelper::checkCheckout($request);
 
-        $currency = $this->activeCurrency();
+        $currency = $this->checkoutInput->activeCurrency();
         $settings = $this->configResolver->resolvePublicConfiguration();
-        $paymentType = $this->resolvePaymentType($request, $settings);
+        $paymentType = $this->checkoutInput->paymentType($request, $settings);
 
         if (!$paymentType) {
             return $this->cancelWithMessage('Nenhuma forma de pagamento do Mercado Pago está ativa.');
@@ -63,53 +62,29 @@ class MercadopagoV2Controller extends Controller
         }
 
         if ($paymentType === 'credit_card') {
-            $this->validateCreditCardRequest($request);
+            $this->checkoutInput->validateCreditCard($request);
         } else {
-            $this->validatePixRequest($request);
+            $this->checkoutInput->validatePix($request);
         }
 
         $checkout = $this->checkoutAmounts($request, $settings, $paymentType);
 
         return $this->processSecureCheckout($request, $checkout, $paymentType);
-
-        try {
-            [$payment, $pixExpiration] = $this->createPayment($request, $settings, $checkout, $paymentType);
-        } catch (Throwable $exception) {
-            Log::warning('Falha ao criar pagamento Mercado Pago.', [
-                'message' => $exception->getMessage(),
-            ]);
-
-            return $this->cancelWithMessage('Não foi possível iniciar o pagamento pelo Mercado Pago.');
-        }
-
-        if (!$payment || !$payment->id) {
-            return $this->cancelWithMessage($this->paymentFailureMessage($payment));
-        }
-
-        if ($paymentType === 'pix') {
-            $order = $this->createOrder($request, $checkout, $payment, 'Unpaid', $this->paymentDetails($payment, $paymentType, $checkout, $pixExpiration));
-            $this->finishCheckout($order);
-
-            return redirect()->route('front.checkout.success');
-        }
-
-        if ($payment->status === 'approved') {
-            $order = $this->createOrder($request, $checkout, $payment, 'Paid', $this->paymentDetails($payment, $paymentType, $checkout));
-            $this->finishCheckout($order);
-
-            return redirect()->route('front.checkout.success');
-        }
-
-        return $this->cancelWithMessage($this->paymentFailureMessage($payment));
     }
 
     protected function processSecureCheckout(Request $request, array $checkout, string $paymentType)
     {
-        if ($this->activeCurrency()->name !== 'BRL') {
+        if ($this->checkoutInput->activeCurrency()->name !== 'BRL') {
             abort(422, 'Moeda invalida para o Mercado Pago.');
         }
 
         $authoritativeAmount = $this->money->centsToDecimal($checkout['total_minor']);
+        $environment = $this->configResolver->resolve()['mode'];
+        try {
+            $this->featureGate->assertCheckoutEnabled($environment);
+        } catch (Throwable) {
+            abort(503, 'Gateway temporariamente indisponivel.');
+        }
         $order = $this->resolvePendingOrder($request, $checkout, $paymentType, $authoritativeAmount);
 
         try {
@@ -241,109 +216,12 @@ class MercadopagoV2Controller extends Controller
         $order->save();
 
         if (!$alreadyRegistered) {
-            $this->registerOrderSideEffects($order, [
+            $this->orderSideEffects->register($order, [
                 'cart' => json_decode((string) $order->cart, true) ?: [],
                 'discount' => json_decode((string) $order->discount, true) ?: [],
                 'total_amount' => $authoritativeAmount,
             ]);
         }
-    }
-
-    protected function validateCheckout(Request $request)
-    {
-        $state = State::whereStatus(1)->count() != 0 ? 'required' : '';
-        $shipping = ShippingService::whereStatus(1)->count() == 0 || PriceHelper::CheckDigital() == true ? 'required' : '';
-
-        if ($request->single_page_checkout == 1) {
-            $request->validate([
-                'state_id' => $state,
-                'shipping_id' => $shipping,
-                'bill_first_name' => 'required',
-                'bill_last_name' => 'required',
-                'bill_email' => 'required|email',
-                'bill_phone' => 'required',
-                'bill_address1' => 'required',
-                'bill_city' => 'required',
-                'bill_zip' => 'required',
-            ]);
-
-            return;
-        }
-
-        $request->validate([
-            'state_id' => $state,
-            'shipping_id' => $shipping,
-        ]);
-    }
-
-    protected function validateCreditCardRequest(Request $request)
-    {
-        $request->validate([
-            'token' => 'required|string',
-            'paymentMethodId' => 'required|string',
-            'paymentTypeId' => 'nullable|string',
-            'docType' => 'required|in:CPF,CNPJ',
-            'docNumber' => 'required|string|min:11|max:18',
-        ], [
-            'token.required' => 'Informe os dados do cartão de crédito.',
-            'paymentMethodId.required' => 'Não foi possível identificar a bandeira do cartão.',
-            'docType.in' => 'Use CPF ou CNPJ como documento.',
-            'docNumber.required' => 'Informe o número do CPF ou CNPJ.',
-        ]);
-
-        $method = strtolower((string) $request->paymentMethodId);
-        $type = strtolower((string) $request->paymentTypeId);
-
-        if ($type === 'debit_card' || str_starts_with($method, 'deb')) {
-            abort(422, 'Cartão de débito não é aceito nesta operação.');
-        }
-    }
-
-    protected function validatePixRequest(Request $request)
-    {
-        $request->validate([
-            'docType' => 'required|in:CPF,CNPJ',
-            'docNumber' => 'required|string|min:11|max:18',
-        ], [
-            'docType.in' => 'Use CPF ou CNPJ como documento.',
-            'docNumber.required' => 'Informe o número do CPF ou CNPJ.',
-        ]);
-    }
-
-    protected function activeCurrency()
-    {
-        if (Session::has('currency')) {
-            $currency = Currency::find(Session::get('currency'));
-
-            if ($currency) {
-                return $currency;
-            }
-        }
-
-        return Currency::where('is_default', 1)->first();
-    }
-
-    protected function resolvePaymentType(Request $request, array $settings)
-    {
-        $requested = $request->input('mercadopago_payment_type');
-
-        if ($requested === 'pix' && (int) $settings['pix_enabled'] === 1) {
-            return 'pix';
-        }
-
-        if ($requested === 'credit_card' && (int) $settings['credit_card_enabled'] === 1) {
-            return 'credit_card';
-        }
-
-        if ((int) $settings['pix_enabled'] === 1) {
-            return 'pix';
-        }
-
-        if ((int) $settings['credit_card_enabled'] === 1) {
-            return 'credit_card';
-        }
-
-        return null;
     }
 
     protected function checkoutAmounts(Request $request, array $settings, string $paymentType)
@@ -359,7 +237,7 @@ class MercadopagoV2Controller extends Controller
             $shipping,
             $coupon,
             $state,
-            $this->activeCurrency(),
+            $this->checkoutInput->activeCurrency(),
             $settings
         );
 
@@ -376,157 +254,6 @@ class MercadopagoV2Controller extends Controller
             'total_amount' => $calculated['totalDecimal'],
             'total_minor' => $calculated['totalMinor'],
         ];
-    }
-
-    protected function payer(Request $request)
-    {
-        $billing = Session::get('billing_address', []);
-        $docType = $request->input('docType', 'CPF');
-        $docNumber = preg_replace('/\D+/', '', (string) $request->input('docNumber'));
-
-        return [
-            'email' => $request->input('bill_email') ?: ($billing['bill_email'] ?? EmailHelper::getEmail()),
-            'first_name' => $request->input('bill_first_name') ?: ($billing['bill_first_name'] ?? ''),
-            'last_name' => $request->input('bill_last_name') ?: ($billing['bill_last_name'] ?? ''),
-            'identification' => [
-                'type' => $docType,
-                'number' => $docNumber,
-            ],
-        ];
-    }
-
-    protected function createOrder(Request $request, array $checkout, $payment, string $paymentStatus, array $paymentDetails)
-    {
-        $user = Auth::user();
-        $orderData['state'] = $request['state_id'] ? json_encode(State::findOrFail($request['state_id']), true) : null;
-        $orderData['cart'] = json_encode($checkout['cart'], true);
-        $orderData['discount'] = json_encode($checkout['discount'], true);
-        $orderData['shipping'] = json_encode($checkout['shipping'], true);
-        $orderData['tax'] = $checkout['total_tax'];
-        $orderData['state_price'] = $checkout['state_price'];
-        $orderData['gateway_fee'] = $checkout['gateway_fee'];
-        $orderData['shipping_info'] = json_encode(Session::get('shipping_address'), true);
-        $orderData['billing_info'] = json_encode(Session::get('billing_address'), true);
-        $orderData['payment_method'] = $paymentDetails['mercadopago']['payment_type'] === 'pix' ? 'Mercado Pago - Pix' : 'Mercado Pago - Cartão de crédito';
-        $orderData['txnid'] = $payment->id;
-        $orderData['user_id'] = isset($user) ? $user->id : 0;
-        $orderData['payment_status'] = $paymentStatus;
-        $orderData['payment_details'] = json_encode($paymentDetails, JSON_UNESCAPED_UNICODE);
-        $orderData['order_status'] = 'Pending';
-        $orderData['transaction_number'] = Str::random(10);
-        $orderData['currency_sign'] = PriceHelper::setCurrencySign();
-        $orderData['currency_value'] = PriceHelper::setCurrencyValue();
-        $order = Order::create($orderData);
-
-        $order->transaction_number = 'ORD-' . str_pad(Carbon::now()->format('Ymd'), 4, '0000', STR_PAD_LEFT) . '-' . $order->id;
-        $order->save();
-
-        $this->registerOrderSideEffects($order, $checkout);
-
-        return $order;
-    }
-
-    protected function registerOrderSideEffects(Order $order, array $checkout)
-    {
-        PriceHelper::Transaction($order->id, $order->transaction_number, EmailHelper::getEmail(), PriceHelper::OrderTotal($order, 'trns'));
-        PriceHelper::LicenseQtyDecrese($checkout['cart']);
-        PriceHelper::stockDecrese();
-
-        TrackOrder::create([
-            'title' => 'Pending',
-            'order_id' => $order->id,
-        ]);
-
-        Notification::create([
-            'order_id' => $order->id,
-        ]);
-
-        if (Session::has('copon')) {
-            $code = PromoCode::find(Session::get('copon')['code']['id']);
-            if ($code) {
-                $code->no_of_times--;
-                $code->update();
-            }
-        }
-
-        if ($checkout['discount']) {
-            $couponId = $checkout['discount']['code']['id'];
-            $coupon = PromoCode::findOrFail($couponId);
-            $coupon->no_of_times -= 1;
-            $coupon->update();
-        }
-
-        $setting = Setting::first();
-        if ($setting->is_twilio == 1) {
-            $sms = new SmsHelper();
-            $userNumber = json_decode($order->billing_info, true)['bill_phone'] ?? null;
-
-            if ($userNumber) {
-                $sms->SendSms($userNumber, "'purchase'", $order->transaction_number);
-            }
-        }
-
-        $this->sendOrderEmail($order, $checkout['total_amount']);
-    }
-
-    protected function sendOrderEmail(Order $order, string $totalAmount)
-    {
-        $user = Auth::user();
-        $emailData = [
-            'to' => EmailHelper::getEmail(),
-            'type' => 'Order',
-            'user_name' => isset($user) ? $user->displayName() : Session::get('billing_address')['bill_first_name'],
-            'order_cost' => $totalAmount,
-            'transaction_number' => $order->transaction_number,
-            'site_title' => Setting::first()->title,
-        ];
-
-        $setting = Setting::first();
-
-        if ($setting->is_queue_enabled == 1) {
-            dispatch(new EmailSendJob($emailData, 'template'));
-
-            return;
-        }
-
-        $email = new EmailHelper();
-        $email->sendTemplateMail($emailData, 'template');
-    }
-
-    protected function paymentDetails($payment, string $paymentType, array $checkout, ?Carbon $pixExpiration = null)
-    {
-        $transactionData = data_get($payment, 'point_of_interaction.transaction_data');
-
-        return [
-            'mercadopago' => [
-                'payment_id' => $payment->id,
-                'payment_type' => $paymentType,
-                'payment_method_id' => $payment->payment_method_id,
-                'payment_type_id' => $payment->payment_type_id,
-                'status' => $payment->status,
-                'status_detail' => $payment->status_detail,
-                'transaction_amount' => $checkout['total_amount'],
-                'gateway_fee' => $checkout['gateway_fee'],
-                'qr_code' => data_get($transactionData, 'qr_code'),
-                'qr_code_base64' => data_get($transactionData, 'qr_code_base64'),
-                'ticket_url' => data_get($transactionData, 'ticket_url'),
-                'expires_at' => $pixExpiration ? $pixExpiration->toDateTimeString() : null,
-                'created_at' => Carbon::now()->toDateTimeString(),
-            ],
-        ];
-    }
-
-    protected function paymentFailureMessage($payment)
-    {
-        if ($payment && isset($payment->error->causes[0]->description)) {
-            return $payment->error->causes[0]->description;
-        }
-
-        if ($payment && $payment->status_detail) {
-            return 'Pagamento não aprovado: ' . $payment->status_detail;
-        }
-
-        return 'Pagamento não aprovado pelo Mercado Pago.';
     }
 
     protected function finishCheckout(Order $order)
