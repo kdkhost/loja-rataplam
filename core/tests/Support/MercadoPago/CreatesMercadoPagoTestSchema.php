@@ -67,6 +67,7 @@ trait CreatesMercadoPagoTestSchema
             $table->boolean('status')->default(0);
             $table->text('text')->nullable();
             $table->string('photo')->nullable();
+            $table->string('favicon')->nullable();
             $table->string('title')->nullable();
             $table->boolean('is_single_checkout')->default(false);
             $table->boolean('is_maintainance')->default(false);
