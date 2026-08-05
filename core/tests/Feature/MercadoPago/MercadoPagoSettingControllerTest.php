@@ -48,6 +48,7 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_saves_configuration()
     {
+        PaymentSetting::create(['unique_keyword' => 'mercadopago', 'information' => '{}', 'status' => 1]);
         $admin = Admin::create([
             'name' => 'Test Admin',
             'email' => 'test@example.com',
@@ -80,6 +81,7 @@ class MercadoPagoSettingControllerTest extends TestCase
             'mode' => 'sandbox',
             'sandbox_public_key' => 'TEST-123',
         ]);
+        $this->assertSame(1, (int) PaymentSetting::where('unique_keyword', 'mercadopago')->value('status'));
     }
 
     public function test_update_validates_mode()
@@ -208,7 +210,7 @@ class MercadoPagoSettingControllerTest extends TestCase
         $response->assertSessionHasErrors(['statement_descriptor']);
     }
 
-    public function test_update_prevents_removing_active_sandbox_token()
+    public function test_update_can_remove_token_without_activating_gateway()
     {
         MercadoPagoSetting::create([
             'configuration_key' => 'default',
@@ -239,7 +241,10 @@ class MercadoPagoSettingControllerTest extends TestCase
             'remove_sandbox_token' => '1',
         ]);
 
-        $response->assertSessionHasErrors();
+        $response->assertSessionHasNoErrors();
+        $settings = MercadoPagoSetting::first();
+        $this->assertNull($settings->sandbox_access_token);
+        $this->assertFalse($settings->sandbox_enabled);
     }
 
     public function test_update_preserves_credentials_when_empty()
@@ -319,5 +324,34 @@ class MercadoPagoSettingControllerTest extends TestCase
         // Confirmar que permanece 'default'
         $setting->refresh();
         $this->assertEquals('default', $setting->configuration_key);
+    }
+
+    public function test_activation_requires_admin(): void
+    {
+        $this->post(route('back.setting.payment.mercadopago.activate', 'sandbox'))->assertRedirect(route('back.login'));
+    }
+
+    public function test_incomplete_activation_is_rejected(): void
+    {
+        MercadoPagoSetting::create(['mode'=>'sandbox','pix_enabled'=>true]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'activate@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','sandbox'))->assertSessionHasErrors();
+        $this->assertFalse(MercadoPagoSetting::first()->sandbox_enabled);
+    }
+
+    public function test_sandbox_activation_and_deactivation_are_explicit_and_independent(): void
+    {
+        MercadoPagoSetting::create([
+            'mode'=>'production','sandbox_public_key'=>'TEST-public','sandbox_access_token'=>'synthetic-token',
+            'sandbox_collector_id'=>'collector-test','sandbox_webhook_secret'=>'synthetic-secret','pix_enabled'=>true,
+        ]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'independent@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','sandbox'))->assertSessionHasNoErrors();
+        $setting=MercadoPagoSetting::first();
+        $this->assertTrue($setting->sandbox_enabled);
+        $this->assertFalse($setting->production_enabled);
+        $this->post(route('back.setting.payment.mercadopago.deactivate','sandbox'))->assertSessionHasNoErrors();
+        $this->assertFalse($setting->refresh()->sandbox_enabled);
+        $this->assertNotNull($setting->sandbox_access_token);
     }
 }

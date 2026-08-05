@@ -197,6 +197,8 @@ trait CreatesMercadoPagoTestSchema
                 $table->id();
                 $table->string('configuration_key')->default('default')->unique();
                 $table->string('mode')->default('sandbox');
+                $table->boolean('sandbox_enabled')->default(false);
+                $table->boolean('production_enabled')->default(false);
                 $table->text('sandbox_public_key')->nullable();
                 $table->text('sandbox_access_token')->nullable();
                 $table->string('sandbox_collector_id')->nullable();

@@ -114,7 +114,7 @@ class MercadoPagoConfigResolverTest extends TestCase
         $this->assertEquals('PROD-456', $config['production_public_key']);
     }
 
-    public function test_fallback_to_legacy_when_no_settings_exist()
+    public function test_legacy_configuration_does_not_enable_new_resolver()
     {
         PaymentSetting::create([
             'unique_keyword' => 'mercadopago',
@@ -130,14 +130,14 @@ class MercadoPagoConfigResolverTest extends TestCase
         $resolver = new MercadoPagoConfigResolver();
         $config = $resolver->resolvePublicConfiguration();
 
-        $this->assertEquals('sandbox', $config['mode']);
-        $this->assertTrue($config['is_legacy']);
+        $this->assertFalse($config['sandbox_enabled']);
+        $this->assertFalse($config['pix_enabled']);
+        $this->assertFalse($config['is_legacy']);
     }
 
     public function test_resolve_backend_credentials_throws_when_no_settings()
     {
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Mercado Pago: Nenhuma configuração encontrada.');
+        $this->expectException(\App\Exceptions\MercadoPagoConfigurationException::class);
 
         $resolver = new MercadoPagoConfigResolver();
         $resolver->resolveBackendCredentials();
