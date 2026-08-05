@@ -74,7 +74,7 @@ class MercadoPagoPaymentService
         $cents = $this->money->decimalToCents($amount);
 
         // Gerar chave de idempotência estável
-        $idempotencyKey = $this->generateIdempotencyKey('pix', $orderData);
+        $idempotencyKey = $this->generateIdempotencyKey('pix', $orderData, $config);
 
         // Adquirir ação local com ownership
         $acquisition = $this->idempotencyService->acquireAction([
@@ -183,7 +183,7 @@ class MercadoPagoPaymentService
         }
 
         // Gerar chave de idempotência estável
-        $idempotencyKey = $this->generateIdempotencyKey('card', $orderData, $cardData);
+        $idempotencyKey = $this->generateIdempotencyKey('card', $orderData, $config, $cardData);
 
         // Adquirir ação local com ownership
         $acquisition = $this->idempotencyService->acquireAction([
@@ -369,13 +369,18 @@ class MercadoPagoPaymentService
     /**
      * Gera chave de idempotência estável
      */
-    protected function generateIdempotencyKey(string $type, array $orderData, ?array $cardData = null): string
+    protected function generateIdempotencyKey(string $type, array $orderData, array $config, ?array $cardData = null): string
     {
+        $amountMinor = $this->money->decimalToCents((string) ($orderData['authoritative_amount'] ?? ''));
+        $currency = (string) ($orderData['currency'] ?? 'BRL');
         $components = [
+            'version' => 2,
             'action' => $type,
             'order_id' => $orderData['order_id'] ?? '',
             'user_id' => $orderData['user_id'] ?? '',
-            'amount' => $orderData['authoritative_amount'] ?? '',
+            'environment' => $config['mode'] ?? '',
+            'currency' => $currency,
+            'amount_minor' => $amountMinor,
         ];
 
         if ($cardData !== null) {
