@@ -46,6 +46,8 @@ class MercadoPagoSetting extends Model
     ];
 
     protected $casts = [
+        'sandbox_enabled' => 'boolean',
+        'production_enabled' => 'boolean',
         'sandbox_access_token' => 'encrypted',
         'production_access_token' => 'encrypted',
         'sandbox_webhook_secret' => 'encrypted',

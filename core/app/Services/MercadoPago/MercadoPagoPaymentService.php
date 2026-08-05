@@ -11,17 +11,20 @@ class MercadoPagoPaymentService
     protected MercadoPagoConfigResolver $configResolver;
     protected MercadoPagoIdempotencyService $idempotencyService;
     protected MercadoPagoMoney $money;
+    protected MercadoPagoFeatureGate $featureGate;
 
     public function __construct(
         ?MercadoPagoClient $client = null,
         ?MercadoPagoConfigResolver $configResolver = null,
         ?MercadoPagoIdempotencyService $idempotencyService = null,
-        ?MercadoPagoMoney $money = null
+        ?MercadoPagoMoney $money = null,
+        ?MercadoPagoFeatureGate $featureGate = null
     ) {
         $this->configResolver = $configResolver ?? app(MercadoPagoConfigResolver::class);
         $this->idempotencyService = $idempotencyService ?? app(MercadoPagoIdempotencyService::class);
         $this->money = $money ?? new MercadoPagoMoney();
         $this->client = $client;
+        $this->featureGate = $featureGate ?? app(MercadoPagoFeatureGate::class);
     }
 
     protected function getAccessToken(): string
@@ -57,9 +60,9 @@ class MercadoPagoPaymentService
      */
     public function createPixPayment(array $orderData): array
     {
-        $this->ensureClient();
-
         $config = $this->configResolver->resolve();
+        $this->assertAuthoritativeGate($config);
+        $this->ensureClient();
 
         if (!$config['pix_enabled']) {
             throw new MercadoPagoApiException('Pagamento Pix não está habilitado.');
@@ -111,6 +114,7 @@ class MercadoPagoPaymentService
                 ],
             ];
 
+            $this->assertAuthoritativeGate($config);
             $response = $this->client->createPayment($payload, $idempotencyKey);
 
             if (!$response->successful) {
@@ -158,9 +162,9 @@ class MercadoPagoPaymentService
      */
     public function createCardPayment(array $orderData, array $cardData): array
     {
-        $this->ensureClient();
-
         $config = $this->configResolver->resolve();
+        $this->assertAuthoritativeGate($config);
+        $this->ensureClient();
 
         if (!$config['credit_card_enabled']) {
             throw new MercadoPagoApiException('Pagamento com cartão não está habilitado.');
@@ -226,6 +230,7 @@ class MercadoPagoPaymentService
                 'token' => $cardData['token'] ?? null,
             ];
 
+            $this->assertAuthoritativeGate($config);
             $response = $this->client->createPayment($payload, $idempotencyKey);
 
             if (!$response->successful) {
@@ -320,6 +325,12 @@ class MercadoPagoPaymentService
         }
 
         return $amount;
+    }
+
+    protected function assertAuthoritativeGate(array $config): void
+    {
+        $environment = $config['mode'] ?? '';
+        $this->featureGate->assertCheckoutEnabled($environment);
     }
 
     /**

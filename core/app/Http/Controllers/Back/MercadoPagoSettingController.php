@@ -1,17 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Back;
 
-use App\Helpers\ImageHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MercadoPagoSettingRequest;
 use App\Models\MercadoPagoSetting;
-use App\Models\PaymentSetting;
+use App\Services\MercadoPago\MercadoPagoFeatureGate;
+use App\Services\MercadoPago\MercadoPagoActivationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class MercadoPagoSettingController extends Controller
 {
-    public function __construct()
+    public function __construct(protected MercadoPagoActivationService $activationService)
     {
         $this->middleware('auth:admin');
         $this->middleware('adminlocalize');
@@ -25,89 +26,63 @@ class MercadoPagoSettingController extends Controller
     public function update(MercadoPagoSettingRequest $request)
     {
         try {
-            return DB::transaction(function () use ($request) {
+            DB::transaction(function () use ($request) {
                 $settings = MercadoPagoSetting::firstOrNew(['configuration_key' => 'default']);
-
-                // Definir explicitamente configuration_key
                 $settings->configuration_key = 'default';
-
-                $mode = $request->input('mode');
-                $isActive = $request->input('status', false);
-
-                // Preencher campos (exceto configuration_key, photo e credenciais)
                 $settings->fill($request->except([
-                    'configuration_key',
-                    'photo',
-                    'sandbox_public_key',
-                    'sandbox_access_token',
-                    'production_public_key',
-                    'production_access_token',
-                    'sandbox_webhook_secret',
-                    'production_webhook_secret',
-                    'remove_sandbox_token',
-                    'remove_production_token',
-                    'remove_sandbox_secret',
-                    'remove_production_secret',
+                    'configuration_key', 'photo', 'status', 'mode',
+                    'sandbox_enabled', 'production_enabled',
+                    'sandbox_public_key', 'sandbox_access_token', 'production_public_key',
+                    'production_access_token', 'sandbox_webhook_secret', 'production_webhook_secret',
+                    'remove_sandbox_token', 'remove_production_token',
+                    'remove_sandbox_secret', 'remove_production_secret',
                 ]));
 
-                // Regra: campo vazio preserva credencial
-                if ($request->filled('sandbox_public_key')) {
-                    $settings->sandbox_public_key = $request->input('sandbox_public_key');
-                }
-
-                if ($request->filled('sandbox_access_token')) {
-                    $settings->sandbox_access_token = $request->input('sandbox_access_token');
-                } elseif ($request->input('remove_sandbox_token', false)) {
-                    $settings->sandbox_access_token = null;
-                }
-
-                if ($request->filled('production_public_key')) {
-                    $settings->production_public_key = $request->input('production_public_key');
-                }
-
-                if ($request->filled('production_access_token')) {
-                    $settings->production_access_token = $request->input('production_access_token');
-                } elseif ($request->input('remove_production_token', false)) {
-                    $settings->production_access_token = null;
-                }
-
-                if ($request->filled('sandbox_webhook_secret')) {
-                    $settings->sandbox_webhook_secret = $request->input('sandbox_webhook_secret');
-                } elseif ($request->input('remove_sandbox_secret', false)) {
-                    $settings->sandbox_webhook_secret = null;
-                }
-
-                if ($request->filled('production_webhook_secret')) {
-                    $settings->production_webhook_secret = $request->input('production_webhook_secret');
-                } elseif ($request->input('remove_production_secret', false)) {
-                    $settings->production_webhook_secret = null;
+                foreach (['sandbox', 'production'] as $environment) {
+                    foreach (['public_key', 'access_token', 'webhook_secret'] as $field) {
+                        $name = $environment . '_' . $field;
+                        if ($request->filled($name)) {
+                            $settings->{$name} = $request->input($name);
+                        }
+                    }
+                    foreach (['token' => 'access_token', 'secret' => 'webhook_secret'] as $remove => $field) {
+                        if ($request->boolean('remove_' . $environment . '_' . $remove)) {
+                            $settings->{$environment . '_' . $field} = null;
+                        }
+                    }
                 }
 
                 $settings->save();
-
-                // Sincronizar com registro legado payment_settings
-                $legacy = PaymentSetting::where('unique_keyword', 'mercadopago')->first();
-                if ($legacy) {
-                    // Tratar imagem
-                    if ($file = $request->file('photo')) {
-                        $legacy->photo = ImageHelper::handleUpdatedUploadedImage($file, 'images', $legacy, 'images/', 'photo');
-                    }
-
-                    $legacy->name = $request->input('name', 'Mercado Pago');
-                    $legacy->status = $request->input('status', false) ? 1 : 0;
-                    $legacy->text = $request->input('text', '');
-                    $legacy->save();
-                }
-
-                return redirect()->back()->withSuccess('Configurações do Mercado Pago atualizadas com sucesso.');
             });
-        } catch (\Exception $e) {
-            Log::error('Mercado Pago: Erro ao salvar configurações', [
-                'operation' => 'update',
-                'exception_class' => get_class($e),
+
+            return redirect()->back()->withSuccess('Configurações salvas. A ativação permanece inalterada.');
+        } catch (\Throwable $exception) {
+            Log::error('Mercado Pago: erro ao salvar configurações', [
+                'exception_class' => get_class($exception),
                 'admin_id' => auth('admin')->id(),
             ]);
             return redirect()->back()->withErrors('Erro ao salvar configurações. Tente novamente.');
         }
+    }
+
+    public function activate(string $environment)
+    {
+        try {
+            $this->activationService->activate($environment);
+            return redirect()->back()->withSuccess('Ambiente Mercado Pago ativado explicitamente.');
+        } catch (\Throwable $exception) {
+            Log::warning('Mercado Pago: ativação rejeitada', [
+                'environment' => $environment,
+                'exception_class' => get_class($exception),
+                'admin_id' => auth('admin')->id(),
+            ]);
+            return redirect()->back()->withErrors('Ativação indisponível: configuração incompleta ou ilegível.');
+        }
+    }
+
+    public function deactivate(string $environment)
+    {
+        $this->activationService->deactivate($environment);
+        return redirect()->back()->withSuccess('Ambiente Mercado Pago desativado.');
     }
 }

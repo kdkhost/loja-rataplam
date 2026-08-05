@@ -48,6 +48,7 @@ class MercadoPagoSettingControllerTest extends TestCase
 
     public function test_update_saves_configuration()
     {
+        PaymentSetting::create(['unique_keyword' => 'mercadopago', 'information' => '{}', 'status' => 1]);
         $admin = Admin::create([
             'name' => 'Test Admin',
             'email' => 'test@example.com',
@@ -80,6 +81,7 @@ class MercadoPagoSettingControllerTest extends TestCase
             'mode' => 'sandbox',
             'sandbox_public_key' => 'TEST-123',
         ]);
+        $this->assertSame(1, (int) PaymentSetting::where('unique_keyword', 'mercadopago')->value('status'));
     }
 
     public function test_update_validates_mode()
@@ -208,7 +210,7 @@ class MercadoPagoSettingControllerTest extends TestCase
         $response->assertSessionHasErrors(['statement_descriptor']);
     }
 
-    public function test_update_prevents_removing_active_sandbox_token()
+    public function test_update_can_remove_token_without_activating_gateway()
     {
         MercadoPagoSetting::create([
             'configuration_key' => 'default',
@@ -239,7 +241,10 @@ class MercadoPagoSettingControllerTest extends TestCase
             'remove_sandbox_token' => '1',
         ]);
 
-        $response->assertSessionHasErrors();
+        $response->assertSessionHasNoErrors();
+        $settings = MercadoPagoSetting::first();
+        $this->assertNull($settings->sandbox_access_token);
+        $this->assertFalse($settings->sandbox_enabled);
     }
 
     public function test_update_preserves_credentials_when_empty()
@@ -319,5 +324,83 @@ class MercadoPagoSettingControllerTest extends TestCase
         // Confirmar que permanece 'default'
         $setting->refresh();
         $this->assertEquals('default', $setting->configuration_key);
+    }
+
+    public function test_activation_requires_admin(): void
+    {
+        $this->post(route('back.setting.payment.mercadopago.activate', 'sandbox'))->assertRedirect(route('back.login'));
+    }
+
+    public function test_incomplete_activation_is_rejected(): void
+    {
+        MercadoPagoSetting::create(['mode'=>'sandbox','pix_enabled'=>true]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'activate@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','sandbox'))->assertSessionHasErrors();
+        $this->assertFalse(MercadoPagoSetting::first()->sandbox_enabled);
+    }
+
+    public function test_sandbox_activation_and_deactivation_are_explicit_and_independent(): void
+    {
+        MercadoPagoSetting::create([
+            'mode'=>'production','sandbox_public_key'=>'TEST-public','sandbox_access_token'=>'synthetic-token',
+            'sandbox_collector_id'=>'collector-test','sandbox_webhook_secret'=>'synthetic-secret','pix_enabled'=>true,
+        ]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'independent@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','sandbox'))->assertSessionHasNoErrors();
+        $setting=MercadoPagoSetting::first();
+        $this->assertTrue($setting->sandbox_enabled);
+        $this->assertFalse($setting->production_enabled);
+        $this->post(route('back.setting.payment.mercadopago.deactivate','sandbox'))->assertSessionHasNoErrors();
+        $this->assertFalse($setting->refresh()->sandbox_enabled);
+        $this->assertNotNull($setting->sandbox_access_token);
+    }
+
+    public function test_update_ignores_malicious_gate_fields(): void
+    {
+        MercadoPagoSetting::create(['mode' => 'sandbox']);
+        $admin = Admin::create(['name'=>'Admin','email'=>'mass@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $this->actingAs($admin, 'admin')->post(route('back.setting.payment.mercadopago.update'), [
+            'mode' => 'sandbox',
+            'webhook_validation_mode' => 'api_lookup',
+            'fee_calculation_mode' => 'additive',
+            'pix_expiration_minutes' => 30,
+            'max_installments' => 1,
+            'pix_fee_percent' => 0,
+            'pix_fee_fixed' => 0,
+            'credit_fee_percent' => 0,
+            'credit_fee_fixed' => 0,
+            'sandbox_enabled' => true,
+            'production_enabled' => true,
+        ])->assertSessionHasNoErrors();
+
+        $setting = MercadoPagoSetting::firstOrFail();
+        $this->assertFalse($setting->sandbox_enabled);
+        $this->assertFalse($setting->production_enabled);
+    }
+
+    public function test_ready_production_can_be_activated_without_enabling_sandbox(): void
+    {
+        MercadoPagoSetting::create([
+            'mode'=>'sandbox','production_public_key'=>'PROD-public','production_access_token'=>'synthetic-prod-token',
+            'production_collector_id'=>'collector-prod','production_webhook_secret'=>'synthetic-prod-secret','pix_enabled'=>true,
+        ]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'production@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','production'))->assertSessionHasNoErrors();
+        $setting=MercadoPagoSetting::firstOrFail();
+        $this->assertTrue($setting->production_enabled);
+        $this->assertFalse($setting->sandbox_enabled);
+        $this->assertSame('production', $setting->mode);
+    }
+
+    public function test_incomplete_production_activation_is_rejected(): void
+    {
+        MercadoPagoSetting::create(['mode'=>'production','production_public_key'=>'PROD-public','pix_enabled'=>true]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'production-incomplete@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $response = $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','production'));
+        $response->assertSessionHasErrors();
+        $this->assertFalse(MercadoPagoSetting::firstOrFail()->production_enabled);
     }
 }

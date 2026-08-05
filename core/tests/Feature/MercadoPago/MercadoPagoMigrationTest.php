@@ -61,6 +61,23 @@ class MercadoPagoMigrationTest extends TestCase
         $this->assertSame([1, 1, 1], $composite->pluck('Non_unique')->map(fn ($value) => (int) $value)->all());
     }
 
+    public function test_migration_000005_feature_gates_are_false_not_null_and_reversible(): void
+    {
+        DB::table('mercadopago_settings')->insert(['configuration_key' => 'existing']);
+        $row = DB::table('mercadopago_settings')->where('configuration_key', 'existing')->first();
+        $this->assertSame(0, (int) $row->sandbox_enabled);
+        $this->assertSame(0, (int) $row->production_enabled);
+
+        $columns = collect(DB::select("SHOW COLUMNS FROM mercadopago_settings WHERE Field IN ('sandbox_enabled','production_enabled')"));
+        $this->assertSame(['NO'], $columns->pluck('Null')->unique()->values()->all());
+
+        $migration = require database_path('migrations/2026_08_05_000005_add_feature_gates_to_mercadopago_settings_table.php');
+        $migration->down();
+        $this->assertFalse(Schema::hasColumn('mercadopago_settings', 'sandbox_enabled'));
+        $this->assertFalse(Schema::hasColumn('mercadopago_settings', 'production_enabled'));
+        $this->assertTrue(Schema::hasColumn('mercadopago_settings', 'mode'));
+    }
+
     public function test_operation_id_unique_allows_multiple_nulls_and_rejects_duplicate_value(): void
     {
         DB::table('mercadopago_actions')->insert([

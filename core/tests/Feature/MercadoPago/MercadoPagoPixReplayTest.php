@@ -3,6 +3,7 @@
 namespace Tests\Feature\MercadoPago;
 
 use App\Models\MercadoPagoAction;
+use App\Models\MercadoPagoSetting;
 use App\Services\MercadoPago\MercadoPagoPaymentService;
 use App\Services\MercadoPago\MercadoPixResponseSanitizer;
 use App\Services\MercadoPago\MercadoPagoResponse;
@@ -19,6 +20,16 @@ class MercadoPagoPixReplayTest extends TestCase
     {
         parent::setUp();
         $this->createMercadoPagoTestSchema();
+        $setting = MercadoPagoSetting::create([
+            'mode' => 'sandbox',
+            'sandbox_public_key' => 'TEST-public',
+            'sandbox_access_token' => 'synthetic-token',
+            'sandbox_collector_id' => 'collector-test',
+            'sandbox_webhook_secret' => 'synthetic-secret',
+            'pix_enabled' => true,
+        ]);
+        $setting->sandbox_enabled = true;
+        $setting->save();
 
         // Configurar serviços reais
         $this->paymentService = app(MercadoPagoPaymentService::class);

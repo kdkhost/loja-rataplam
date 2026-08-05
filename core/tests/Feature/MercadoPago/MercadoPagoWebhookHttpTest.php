@@ -3,6 +3,7 @@
 namespace Tests\Feature\MercadoPago;
 
 use App\Models\MercadoPagoAction;
+use App\Models\MercadoPagoSetting;
 use App\Services\MercadoPago\MercadoPagoClient;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
 use App\Services\MercadoPago\MercadoPagoCredentials;
@@ -25,6 +26,14 @@ class MercadoPagoWebhookHttpTest extends TestCase
     {
         parent::setUp();
         $this->createMercadoPagoTestSchema();
+        $setting = MercadoPagoSetting::create([
+            'mode' => 'sandbox',
+            'sandbox_public_key' => 'TEST-public', 'sandbox_access_token' => 'synthetic-token',
+            'sandbox_collector_id' => self::COLLECTOR_ID, 'sandbox_webhook_secret' => self::SECRET,
+            'pix_enabled' => true, 'credit_card_enabled' => true,
+        ]);
+        $setting->sandbox_enabled = true;
+        $setting->save();
     }
 
     protected function tearDown(): void
@@ -36,6 +45,25 @@ class MercadoPagoWebhookHttpTest extends TestCase
     public function test_only_post_is_accepted(): void
     {
         $this->get('/mercadopago/webhook/v2?data.id=pay-http')->assertStatus(405);
+    }
+
+    public function test_missing_gate_rejects_before_remote_call_or_write(): void
+    {
+        MercadoPagoSetting::query()->delete();
+        $this->bindWebhookDependencies(remoteCalls: 0);
+        $this->postJson('/mercadopago/webhook/v2?data.id=pay-http')->assertStatus(503)->assertJson(['error'=>'Service unavailable']);
+        $this->assertDatabaseCount('mercadopago_actions', 0);
+    }
+
+    public function test_false_gate_rejects_even_with_valid_signature_before_remote_call_or_write(): void
+    {
+        MercadoPagoSetting::query()->update(['sandbox_enabled'=>false]);
+        $this->bindWebhookDependencies(remoteCalls: 0);
+        $this->postJson('/mercadopago/webhook/v2?data.id=pay-http', [], [
+            'x-request-id'=>self::REQUEST_ID,
+            'x-signature'=>$this->signature('pay-http'),
+        ])->assertStatus(503)->assertJson(['error'=>'Service unavailable']);
+        $this->assertDatabaseCount('mercadopago_actions', 0);
     }
 
     public function test_missing_signature_is_rejected_before_remote_call_or_write(): void
