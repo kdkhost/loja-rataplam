@@ -26,12 +26,14 @@ class MercadoPagoWebhookHttpTest extends TestCase
     {
         parent::setUp();
         $this->createMercadoPagoTestSchema();
-        MercadoPagoSetting::create([
-            'mode' => 'sandbox', 'sandbox_enabled' => true,
+        $setting = MercadoPagoSetting::create([
+            'mode' => 'sandbox',
             'sandbox_public_key' => 'TEST-public', 'sandbox_access_token' => 'synthetic-token',
             'sandbox_collector_id' => self::COLLECTOR_ID, 'sandbox_webhook_secret' => self::SECRET,
             'pix_enabled' => true, 'credit_card_enabled' => true,
         ]);
+        $setting->sandbox_enabled = true;
+        $setting->save();
     }
 
     protected function tearDown(): void

@@ -4,6 +4,7 @@ namespace Tests\Unit\MercadoPago;
 use App\Models\MercadoPagoAction;
 use App\Services\MercadoPago\MercadoPagoClient;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
+use App\Services\MercadoPago\MercadoPagoFeatureGate;
 use App\Services\MercadoPago\MercadoPagoIdempotencyService;
 use App\Services\MercadoPago\MercadoPagoPaymentService;
 use App\Services\MercadoPago\MercadoPagoResponse;
@@ -111,7 +112,7 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
 
         $idempotencyService->method('completeAction');
 
-        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService);
+        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService, null, $this->enabledGate());
 
         $orderData = [
             'order_id' => null,
@@ -194,7 +195,7 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
 
         $mockConfigResolver = $this->createMockConfigResolver();
         $idempotencyService = app(MercadoPagoIdempotencyService::class);
-        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService);
+        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService, null, $this->enabledGate());
 
         // Sobrescrever geração de chave para usar a chave existente
         $idempotencyService = $this->createMock(MercadoPagoIdempotencyService::class);
@@ -202,7 +203,7 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
         $acquisition = \App\Services\MercadoPago\MercadoPagoIdempotencyAcquisitionResult::existingSuccess($action);
         $idempotencyService->method('acquireAction')->willReturn($acquisition);
 
-        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService);
+        $service = new MercadoPagoPaymentService($fakeClient, $mockConfigResolver, $idempotencyService, null, $this->enabledGate());
 
         $result = $service->createPixPayment([
             'order_id' => null,
@@ -230,5 +231,13 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
                 'notification_url' => 'https://example.com/webhook',
             ]);
         return $mock;
+    }
+
+    protected function enabledGate(): MercadoPagoFeatureGate
+    {
+        $gate = $this->createMock(MercadoPagoFeatureGate::class);
+        $gate->method('assertCheckoutEnabled');
+
+        return $gate;
     }
 }

@@ -354,4 +354,53 @@ class MercadoPagoSettingControllerTest extends TestCase
         $this->assertFalse($setting->refresh()->sandbox_enabled);
         $this->assertNotNull($setting->sandbox_access_token);
     }
+
+    public function test_update_ignores_malicious_gate_fields(): void
+    {
+        MercadoPagoSetting::create(['mode' => 'sandbox']);
+        $admin = Admin::create(['name'=>'Admin','email'=>'mass@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $this->actingAs($admin, 'admin')->post(route('back.setting.payment.mercadopago.update'), [
+            'mode' => 'sandbox',
+            'webhook_validation_mode' => 'api_lookup',
+            'fee_calculation_mode' => 'additive',
+            'pix_expiration_minutes' => 30,
+            'max_installments' => 1,
+            'pix_fee_percent' => 0,
+            'pix_fee_fixed' => 0,
+            'credit_fee_percent' => 0,
+            'credit_fee_fixed' => 0,
+            'sandbox_enabled' => true,
+            'production_enabled' => true,
+        ])->assertSessionHasNoErrors();
+
+        $setting = MercadoPagoSetting::firstOrFail();
+        $this->assertFalse($setting->sandbox_enabled);
+        $this->assertFalse($setting->production_enabled);
+    }
+
+    public function test_ready_production_can_be_activated_without_enabling_sandbox(): void
+    {
+        MercadoPagoSetting::create([
+            'mode'=>'sandbox','production_public_key'=>'PROD-public','production_access_token'=>'synthetic-prod-token',
+            'production_collector_id'=>'collector-prod','production_webhook_secret'=>'synthetic-prod-secret','pix_enabled'=>true,
+        ]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'production@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','production'))->assertSessionHasNoErrors();
+        $setting=MercadoPagoSetting::firstOrFail();
+        $this->assertTrue($setting->production_enabled);
+        $this->assertFalse($setting->sandbox_enabled);
+        $this->assertSame('production', $setting->mode);
+    }
+
+    public function test_incomplete_production_activation_is_rejected(): void
+    {
+        MercadoPagoSetting::create(['mode'=>'production','production_public_key'=>'PROD-public','pix_enabled'=>true]);
+        $admin=Admin::create(['name'=>'Admin','email'=>'production-incomplete@example.test','password'=>bcrypt('synthetic'),'role'=>'admin']);
+
+        $response = $this->actingAs($admin,'admin')->post(route('back.setting.payment.mercadopago.activate','production'));
+        $response->assertSessionHasErrors();
+        $this->assertFalse(MercadoPagoSetting::firstOrFail()->production_enabled);
+    }
 }

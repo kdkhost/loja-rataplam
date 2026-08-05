@@ -37,11 +37,20 @@ class MercadoPagoFeatureGateTest extends TestCase
     private function gate(): MercadoPagoFeatureGate { return new MercadoPagoFeatureGate(); }
     private function setting(array $overrides=[]): MercadoPagoSetting
     {
-        return MercadoPagoSetting::create(array_merge([
+        $attributes = array_merge([
             'configuration_key'=>'default','mode'=>'sandbox','sandbox_enabled'=>false,'production_enabled'=>false,
             'sandbox_public_key'=>'TEST-public','sandbox_access_token'=>'synthetic-token','sandbox_collector_id'=>'collector-test','sandbox_webhook_secret'=>'synthetic-secret',
             'production_public_key'=>'PROD-public','production_access_token'=>'synthetic-prod-token','production_collector_id'=>'collector-prod','production_webhook_secret'=>'synthetic-prod-secret',
             'pix_enabled'=>true,'credit_card_enabled'=>true,
-        ], $overrides));
+        ], $overrides);
+        $sandboxEnabled = (bool) $attributes['sandbox_enabled'];
+        $productionEnabled = (bool) $attributes['production_enabled'];
+        unset($attributes['sandbox_enabled'], $attributes['production_enabled']);
+        $setting = MercadoPagoSetting::create($attributes);
+        $setting->sandbox_enabled = $sandboxEnabled;
+        $setting->production_enabled = $productionEnabled;
+        $setting->save();
+
+        return $setting;
     }
 }

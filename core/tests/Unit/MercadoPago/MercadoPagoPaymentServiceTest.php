@@ -2,9 +2,11 @@
 namespace Tests\Unit\MercadoPago;
 
 use App\Exceptions\MercadoPagoApiException;
+use App\Exceptions\MercadoPagoConfigurationException;
 use App\Models\MercadoPagoAction;
 use App\Services\MercadoPago\MercadoPagoClient;
 use App\Services\MercadoPago\MercadoPagoConfigResolver;
+use App\Services\MercadoPago\MercadoPagoFeatureGate;
 use App\Services\MercadoPago\MercadoPagoIdempotencyAcquisitionResult;
 use App\Services\MercadoPago\MercadoPagoIdempotencyService;
 use App\Services\MercadoPago\MercadoPagoMoney;
@@ -70,7 +72,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $mockIdempotencyService = $this->createMockIdempotencyService();
         $mockMercadoPagoClient = new MercadoPagoClient('fake-token', $mockGuzzleClient);
 
-        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, $mockIdempotencyService);
+        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, $mockIdempotencyService, null, $this->enabledGate());
 
         $result = $service->createPixPayment([
             'order_id' => 'order-123',
@@ -102,7 +104,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         ]);
 
         $mockMercadoPagoClient = new MercadoPagoClient('prod-token');
-        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver);
+        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, null, null, $this->enabledGate());
 
         $this->expectException(MercadoPagoApiException::class);
         $this->expectExceptionMessage('sandbox');
@@ -146,7 +148,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $mockIdempotencyService = $this->createMockIdempotencyService();
         $mockMercadoPagoClient = new MercadoPagoClient('fake-token', $mockGuzzleClient);
 
-        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, $mockIdempotencyService);
+        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, $mockIdempotencyService, null, $this->enabledGate());
 
         $result = $service->createCardPayment(
             [
@@ -185,7 +187,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         ]);
 
         $mockMercadoPagoClient = new MercadoPagoClient('fake-token');
-        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver);
+        $service = new MercadoPagoPaymentService($mockMercadoPagoClient, $mockConfigResolver, null, null, $this->enabledGate());
 
         $this->expectException(MercadoPagoApiException::class);
         $this->expectExceptionMessage('parcelas');
@@ -230,6 +232,48 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $this->assertEquals('approved', $result['status']);
     }
 
+    public function test_disabled_authoritative_gate_blocks_before_idempotency(): void
+    {
+        $config = $this->createMockConfigResolver($this->createDefaultConfig());
+        $client = $this->createMock(MercadoPagoClient::class);
+        $client->expects($this->never())->method('createPayment');
+        $idempotency = $this->createMock(MercadoPagoIdempotencyService::class);
+        $idempotency->expects($this->never())->method('acquireAction');
+        $gate = $this->createMock(MercadoPagoFeatureGate::class);
+        $gate->expects($this->once())->method('assertCheckoutEnabled')
+            ->willThrowException(new MercadoPagoConfigurationException('Integração Mercado Pago indisponível.'));
+        $service = new MercadoPagoPaymentService($client, $config, $idempotency, null, $gate);
+
+        $this->expectException(MercadoPagoConfigurationException::class);
+        $service->createPixPayment(['order_id' => 'gate-off', 'authoritative_amount' => '10.50']);
+    }
+
+    public function test_gate_disabled_after_lease_blocks_client_and_completes_action_as_failed(): void
+    {
+        $config = $this->createMockConfigResolver($this->createDefaultConfig());
+        $client = $this->createMock(MercadoPagoClient::class);
+        $client->expects($this->never())->method('createPayment');
+        $action = $this->createMock(MercadoPagoAction::class);
+        $acquisition = MercadoPagoIdempotencyAcquisitionResult::acquiredNew($action, 'owner');
+        $idempotency = $this->createMock(MercadoPagoIdempotencyService::class);
+        $idempotency->expects($this->once())->method('acquireAction')->willReturn($acquisition);
+        $idempotency->expects($this->once())->method('completeAction')
+            ->with($action, $this->callback(fn ($response) => !$response->successful), 'owner');
+        $gate = $this->createMock(MercadoPagoFeatureGate::class);
+        $calls = 0;
+        $gate->expects($this->exactly(2))->method('assertCheckoutEnabled')->willReturnCallback(
+            function () use (&$calls): void {
+                if (++$calls === 2) {
+                    throw new MercadoPagoConfigurationException('Integração Mercado Pago indisponível.');
+                }
+            }
+        );
+        $service = new MercadoPagoPaymentService($client, $config, $idempotency, null, $gate);
+
+        $this->expectException(MercadoPagoConfigurationException::class);
+        $service->createPixPayment(['order_id' => 'gate-race', 'authoritative_amount' => '10.50']);
+    }
+
     protected function createMockConfigResolver(array $config)
     {
         $mock = $this->createMock(MercadoPagoConfigResolver::class);
@@ -254,6 +298,14 @@ class MercadoPagoPaymentServiceTest extends TestCase
             ->willReturn('123e4567-e89b-52d3-a456-426614174000');
         $mock->method('completeAction');
         return $mock;
+    }
+
+    protected function enabledGate(): MercadoPagoFeatureGate
+    {
+        $gate = $this->createMock(MercadoPagoFeatureGate::class);
+        $gate->method('assertCheckoutEnabled');
+
+        return $gate;
     }
 
     protected function createDefaultConfig(): array

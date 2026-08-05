@@ -38,12 +38,14 @@ class MercadoPagoCheckoutHttpTest extends TestCase
             'information' => json_encode(['pix_enabled' => 1, 'credit_card_enabled' => 0]),
             'status' => 1,
         ]);
-        MercadoPagoSetting::create([
-            'mode' => 'sandbox', 'sandbox_enabled' => true,
+        $setting = MercadoPagoSetting::create([
+            'mode' => 'sandbox',
             'sandbox_public_key' => 'TEST-public', 'sandbox_access_token' => 'synthetic-token',
             'sandbox_collector_id' => 'collector-test', 'sandbox_webhook_secret' => 'synthetic-secret',
             'pix_enabled' => true, 'credit_card_enabled' => false,
         ]);
+        $setting->sandbox_enabled = true;
+        $setting->save();
         $this->user = User::findOrFail(20);
     }
 
