@@ -163,6 +163,10 @@ Route::group(['middleware' => ['adminlocalize', 'demo']], function () {
             //------------ PAYMENT SETTING ------------
             Route::get('/setting/payment', 'Back\PaymentSettingController@payment')->name('back.setting.payment');
             Route::post('/setting/payment/update', 'Back\PaymentSettingController@update')->name('back.setting.payment.update');
+
+            //------------ MERCADO PAGO SETTING ------------
+            Route::get('/setting/payment/mercadopago', 'Back\MercadoPagoSettingController@index')->name('back.setting.payment.mercadopago');
+            Route::post('/setting/payment/mercadopago/update', 'Back\MercadoPagoSettingController@update')->name('back.setting.payment.mercadopago.update');
         });
 
         Route::group(['middleware' => 'permissions:System Backup'], function () {
@@ -473,8 +477,8 @@ Route::group(['middleware' => 'maintainance'], function () {
         Route::post('/razorpay/submit', 'Payment\RazorpayController@store')->name('front.razorpay.submit');
         Route::post('/flutterwave/notify', 'Payment\FlutterwaveController@notify')->name('front.flutterwave.notify');
         Route::post('/flutterwave/submit', 'Payment\FlutterwaveController@store')->name('front.flutterwave.submit');
-        Route::post('/mercadopago/submit', 'Payment\MercadopagoController@store')->name('front.mercadopago.submit');
-        Route::post('/mercadopago/webhook', 'Payment\MercadopagoController@webhook')->name('front.mercadopago.webhook');
+        Route::post('/mercadopago/submit', 'Payment\MercadopagoController@store')->middleware('auth')->name('front.mercadopago.submit');
+        Route::post('/mercadopago/webhook/v2', 'Front\MercadoPagoWebhookController@handle')->name('front.mercadopago.webhook.v2');
         Route::post('/authorize/submit', 'Payment\AuthorizeController@store')->name('front.authorize.submit');
 
         Route::post('/sslcommerz/notify', 'Payment\SslCommerzController@notify')->name('front.sslcommerz.notify');

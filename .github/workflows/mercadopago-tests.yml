@@ -1,0 +1,58 @@
+name: Mercado Pago tests
+
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mercadopago:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mariadb:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: rataplam_mp_local_test
+          MARIADB_USER: mercadopago_test
+          MARIADB_PASSWORD: synthetic_test_password
+          MARIADB_ROOT_PASSWORD: synthetic_root_password
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    defaults:
+      run:
+        working-directory: core
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3307
+      DB_DATABASE: rataplam_mp_local_test
+      DB_USERNAME: mercadopago_test
+      DB_PASSWORD: synthetic_test_password
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql
+          coverage: none
+
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: php artisan config:clear --env=testing
+      - run: php artisan test tests/Unit/MercadoPago
+      - run: php artisan test tests/Feature/MercadoPago
+      - run: php artisan test --filter=MercadoPago
