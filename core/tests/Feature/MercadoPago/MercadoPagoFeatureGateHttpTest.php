@@ -58,6 +58,23 @@ class MercadoPagoFeatureGateHttpTest extends TestCase
 
     public function test_incomplete_v2_fails_closed_through_real_dispatcher_without_fallback_or_writes(): void
     {
+        $legacyControllerResolutions = 0;
+        $v2ControllerResolutions = 0;
+        $legacyClientResolutions = 0;
+        $v2ClientResolutions = 0;
+        $this->app->resolving(MercadopagoLegacyController::class, function () use (&$legacyControllerResolutions): void {
+            $legacyControllerResolutions++;
+        });
+        $this->app->resolving(MercadopagoV2Controller::class, function () use (&$v2ControllerResolutions): void {
+            $v2ControllerResolutions++;
+        });
+        $this->app->resolving(MercadoPagoLegacyClient::class, function () use (&$legacyClientResolutions): void {
+            $legacyClientResolutions++;
+        });
+        $this->app->resolving(MercadoPagoClient::class, function () use (&$v2ClientResolutions): void {
+            $v2ClientResolutions++;
+        });
+
         $this->setting(['sandbox_enabled'=>true,'sandbox_access_token'=>null]);
         \DB::table('payment_settings')->insert([
             'unique_keyword'=>'mercadopago', 'information'=>json_encode(['token'=>'legacy-synthetic']), 'status'=>1,
@@ -72,6 +89,10 @@ class MercadoPagoFeatureGateHttpTest extends TestCase
         $this->actingAs(User::first())->post('/mercadopago/submit')->assertStatus(503);
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseCount('mercadopago_actions', 0);
+        $this->assertSame(0, $legacyControllerResolutions);
+        $this->assertSame(0, $v2ControllerResolutions);
+        $this->assertSame(0, $legacyClientResolutions);
+        $this->assertSame(0, $v2ClientResolutions);
     }
 
     private function bindControllers(int $legacyCalls, int $v2Calls): array

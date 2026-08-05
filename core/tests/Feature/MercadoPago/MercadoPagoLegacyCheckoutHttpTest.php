@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\MercadoPago;
 
+use App\Http\Controllers\Payment\MercadopagoLegacyController;
+use App\Http\Controllers\Payment\MercadopagoV2Controller;
 use App\Models\User;
+use App\Services\MercadoPago\MercadoPagoClient;
 use App\Services\MercadoPago\MercadoPagoLegacyClient;
 use App\Services\MercadoPago\MercadoPagoPaymentService;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +49,19 @@ class MercadoPagoLegacyCheckoutHttpTest extends TestCase
 
     public function test_real_legacy_route_uses_only_legacy_sdk_boundary(): void
     {
+        $legacyControllerResolutions = 0;
+        $v2ControllerResolutions = 0;
+        $v2ClientResolutions = 0;
+        $this->app->resolving(MercadopagoLegacyController::class, function () use (&$legacyControllerResolutions): void {
+            $legacyControllerResolutions++;
+        });
+        $this->app->resolving(MercadopagoV2Controller::class, function () use (&$v2ControllerResolutions): void {
+            $v2ControllerResolutions++;
+        });
+        $this->app->resolving(MercadoPagoClient::class, function () use (&$v2ClientResolutions): void {
+            $v2ClientResolutions++;
+        });
+
         $client = $this->createMock(MercadoPagoLegacyClient::class);
         $client->expects($this->once())->method('configure')->with('legacy-synthetic-token');
         $payment = new \stdClass();
@@ -75,5 +91,8 @@ class MercadoPagoLegacyCheckoutHttpTest extends TestCase
         $this->assertDatabaseCount('mercadopago_actions', 0);
         $this->assertDatabaseCount('orders', 0);
         $this->assertDatabaseMissing('mercadopago_settings', ['sandbox_enabled' => true]);
+        $this->assertSame(1, $legacyControllerResolutions);
+        $this->assertSame(0, $v2ControllerResolutions);
+        $this->assertSame(0, $v2ClientResolutions);
     }
 }
