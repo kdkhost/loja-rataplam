@@ -45,6 +45,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Reject tracked environment files
+        shell: bash
+        run: |
+          tracked_env_files="$(
+            git ls-files --full-name |
+              grep -E '(^|/)\.env($|\.)' |
+              grep -vE '(^|/)\.env\.example$' || true
+          )"
+
+          if [ -n "$tracked_env_files" ]; then
+            echo "Tracked environment files are forbidden:"
+            echo "$tracked_env_files"
+            exit 1
+          fi
+
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
