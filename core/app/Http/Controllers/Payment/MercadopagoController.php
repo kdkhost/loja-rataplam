@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Payment;
 
 use App\Http\Controllers\Controller;
+use App\Services\MercadoPago\MercadoPagoCheckoutControllerFactory;
 use App\Services\MercadoPago\MercadoPagoFeatureGate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,8 +12,7 @@ use Throwable;
 class MercadopagoController extends Controller
 {
     public function __construct(
-        protected MercadopagoLegacyController $legacy,
-        protected MercadopagoV2Controller $v2,
+        protected MercadoPagoCheckoutControllerFactory $controllerFactory,
         protected MercadoPagoFeatureGate $featureGate
     ) {}
 
@@ -21,7 +21,7 @@ class MercadopagoController extends Controller
         $environment = $this->featureGate->requestedEnvironment();
 
         if ($environment === null) {
-            return $this->legacy->store($request);
+            return $this->controllerFactory->legacy()->store($request);
         }
 
         try {
@@ -34,6 +34,6 @@ class MercadopagoController extends Controller
             abort(401);
         }
 
-        return $this->v2->store($request);
+        return $this->controllerFactory->v2()->store($request);
     }
 }
