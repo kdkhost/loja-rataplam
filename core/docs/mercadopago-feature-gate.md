@@ -6,7 +6,9 @@ Salvar chaves, tokens, collectors, segredos e opções de pagamento também não
 
 Os gates nao participam de mass assignment. Ativacao e desativacao passam por servico dedicado, transacao, releitura do registro canonico com `lockForUpdate` e atribuicao explicita somente do ambiente solicitado. Assim, a decisao nao reutiliza configuracao stale carregada antes do lock.
 
-O checkout V2 revalida o gate no servico autoritativo antes de criar a acao idempotente ou adquirir a lease e novamente imediatamente antes do client remoto. Se ocorrer desativacao entre esses pontos, nenhuma chamada externa ou alteracao do pedido acontece; a acao de auditoria ja adquirida e concluida como falha pela semantica existente, liberando sua lease e mantendo o retry deterministico.
+Os controllers legado e V2 sao independentes e compartilham somente servicos neutros por composicao. O checkout V2 revalida o gate antes de resolver ou criar o pedido, antes de criar a acao idempotente ou adquirir a lease e novamente imediatamente antes do client remoto.
+
+Se a desativacao ocorrer antes da barreira autoritativa da orquestracao, nenhum pedido ou acao e criado. Se ocorrer depois de um pedido pendente ja ter sido persistido, o pedido pode permanecer pendente, mas nao e marcado como pago. Se ocorrer depois da lease e antes do client, a acao passa ao estado terminal `failed`; os campos de ownership sao preservados para auditoria, mas a lease deixa de ser executavel porque somente `pending` pode ser executado ou readquirido. A verificacao final reduz a janela de corrida, mas nao revoga uma chamada remota que ja tenha sido iniciada.
 
 ## Ordem operacional
 
