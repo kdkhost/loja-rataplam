@@ -3,6 +3,7 @@
 namespace Tests\Feature\MercadoPago;
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 use Tests\Support\MercadoPago\CreatesMercadoPagoTestSchema;
@@ -45,6 +46,16 @@ class MercadoPagoMigrationTest extends TestCase
         // Verificar que campos já existem (migrations já aplicadas)
         $this->assertTrue(Schema::hasColumn('mercadopago_settings', 'sandbox_collector_id'));
         $this->assertTrue(Schema::hasColumn('mercadopago_settings', 'production_collector_id'));
+    }
+
+    public function test_migration_000004_add_operation_constraints()
+    {
+        $indexes = collect(DB::select('SHOW INDEX FROM mercadopago_actions'))
+            ->pluck('Key_name')
+            ->unique();
+
+        $this->assertContains('mp_operation_id_unique', $indexes);
+        $this->assertContains('mp_order_action_environment', $indexes);
     }
 
     public function test_migrations_ordem_correta()

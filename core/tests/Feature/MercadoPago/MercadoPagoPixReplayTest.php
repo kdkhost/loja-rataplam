@@ -32,6 +32,15 @@ class MercadoPagoPixReplayTest extends TestCase
             'production_access_token' => 'prod-token',
             'notification_url' => 'https://example.com/webhook',
         ]);
+        $mockConfigResolver->method('resolveBackendCredentials')->willReturn(
+            new \App\Services\MercadoPago\MercadoPagoCredentials(
+                publicKey: 'synthetic-public-key',
+                accessToken: 'fake-token',
+                webhookSecret: 'synthetic-webhook-secret',
+                mode: 'sandbox',
+                collectorId: 'synthetic-collector'
+            )
+        );
         $this->paymentService->setConfigResolver($mockConfigResolver);
     }
 
@@ -47,6 +56,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => null,
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -96,6 +106,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-456',
             'amount' => '50.00',
+            'authoritative_amount' => '50.00',
             'description' => 'Test order 2',
             'payer_email' => 'customer2@example.com',
         ];
@@ -142,6 +153,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-789',
             'amount' => '75.00',
+            'authoritative_amount' => '75.00',
             'description' => 'Test order 3',
             'payer_email' => 'customer3@example.com',
         ];
@@ -182,6 +194,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-555',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -228,6 +241,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-999',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -264,6 +278,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-888',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -301,6 +316,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-777',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -337,6 +353,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-666',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -373,6 +390,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-log-test',
             'amount' => '100.00',
+            'authoritative_amount' => '100.00',
             'description' => 'Test order',
             'payer_email' => 'customer@example.com',
         ];
@@ -415,6 +433,7 @@ class MercadoPagoPixReplayTest extends TestCase
         $orderData = [
             'order_id' => 'order-contract-test',
             'amount_cents' => 10000,
+            'authoritative_amount' => '100.00',
             'description' => 'Teste contrato',
             'payer_email' => 'test@example.com',
         ];
@@ -511,6 +530,7 @@ class MercadoPagoPixReplayTest extends TestCase
     private function createMockIdempotencyService(MercadoPagoAction $existingAction)
     {
         $mock = $this->createMock(\App\Services\MercadoPago\MercadoPagoIdempotencyService::class);
+        $mock->method('generateDeterministicKey')->willReturn($existingAction->idempotency_key);
         $mock->method('acquireAction')->willReturn(
             new \App\Services\MercadoPago\MercadoPagoIdempotencyAcquisitionResult(
                 $existingAction,

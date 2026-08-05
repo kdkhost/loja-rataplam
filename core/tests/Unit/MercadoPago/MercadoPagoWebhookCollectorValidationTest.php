@@ -106,7 +106,7 @@ class MercadoPagoWebhookCollectorValidationTest extends TestCase
         );
 
         $this->expectException(\App\Exceptions\MercadoPagoApiException::class);
-        $this->expectExceptionMessage('Pagamento pertence a outra conta.');
+        $this->expectExceptionMessage('Conta recebedora divergente.');
 
         $this->webhookService->handleNotification($notification);
     }
@@ -149,7 +149,7 @@ class MercadoPagoWebhookCollectorValidationTest extends TestCase
         );
 
         $this->expectException(\App\Exceptions\MercadoPagoApiException::class);
-        $this->expectExceptionMessage('Pagamento não possui identificador de conta.');
+        $this->expectExceptionMessage('Conta recebedora divergente.');
 
         $this->webhookService->handleNotification($notification);
     }
@@ -192,7 +192,7 @@ class MercadoPagoWebhookCollectorValidationTest extends TestCase
         );
 
         $this->expectException(\App\Exceptions\MercadoPagoApiException::class);
-        $this->expectExceptionMessage('Pagamento pertence a outra conta.');
+        $this->expectExceptionMessage('Conta recebedora divergente.');
 
         $this->webhookService->handleNotification($notification);
     }
@@ -235,7 +235,7 @@ class MercadoPagoWebhookCollectorValidationTest extends TestCase
         );
 
         $this->expectException(\App\Exceptions\MercadoPagoApiException::class);
-        $this->expectExceptionMessage('Pagamento pertence a outra conta.');
+        $this->expectExceptionMessage('Conta recebedora divergente.');
 
         $this->webhookService->handleNotification($notification);
     }
@@ -278,7 +278,7 @@ class MercadoPagoWebhookCollectorValidationTest extends TestCase
         );
 
         $this->expectException(\App\Exceptions\MercadoPagoApiException::class);
-        $this->expectExceptionMessage('Pagamento pertence a outra conta.');
+        $this->expectExceptionMessage('Conta recebedora divergente.');
 
         $this->webhookService->handleNotification($notification);
 

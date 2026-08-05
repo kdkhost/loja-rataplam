@@ -40,6 +40,7 @@ class MercadoPagoWebhookServiceTest extends TestCase
                 'external_reference' => 'order-123',
                 'currency_id' => 'BRL',
                 'sandbox' => true,
+                'collector_id' => 'collector-test',
                 'transaction_amount' => 10.50,
             ])),
         ]);
@@ -170,7 +171,7 @@ class MercadoPagoWebhookServiceTest extends TestCase
             accessToken: $config['sandbox_access_token'] ?? 'fake-token',
             webhookSecret: $config['sandbox_webhook_secret'] ?? null,
             mode: 'sandbox',
-            collectorId: null // null para não quebrar testes existentes
+            collectorId: 'collector-test'
         );
         $mock->method('resolveBackendCredentials')->willReturn($credentials);
 
@@ -191,7 +192,15 @@ class MercadoPagoWebhookServiceTest extends TestCase
         $actionMock = $this->createMock(MercadoPagoAction::class);
         $actionMock->id = 1;
 
-        $mock->method('initiateAction')->willReturn($actionMock);
+        $mock->method('generateDeterministicKey')
+            ->willReturn('123e4567-e89b-52d3-a456-426614174002');
+        $mock->method('generateFingerprint')->willReturn(str_repeat('a', 64));
+        $mock->method('acquireAction')->willReturn(
+            \App\Services\MercadoPago\MercadoPagoIdempotencyAcquisitionResult::acquiredNew(
+                $actionMock,
+                'test-owner-uuid'
+            )
+        );
         $mock->method('completeAction');
         return $mock;
     }

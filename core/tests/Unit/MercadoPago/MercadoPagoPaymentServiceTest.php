@@ -74,7 +74,8 @@ class MercadoPagoPaymentServiceTest extends TestCase
 
         $result = $service->createPixPayment([
             'order_id' => 'order-123',
-            'amount' => '10.50',
+            'amount' => '99999.99',
+            'authoritative_amount' => '10.50',
             'description' => 'Test Order',
             'payer_email' => 'customer@example.com',
         ]);
@@ -86,6 +87,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $request = $container[0]['request'];
         $this->assertEquals('Bearer fake-token', $request->getHeaderLine('Authorization'));
         $this->assertNotEmpty($request->getHeaderLine('X-Idempotency-Key'));
+        $this->assertSame(10.5, json_decode((string) $request->getBody(), true)['transaction_amount']);
     }
 
     public function test_create_pix_payment_rejects_production_mode()
@@ -108,6 +110,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $service->createPixPayment([
             'order_id' => 'order-123',
             'amount' => '10.50',
+            'authoritative_amount' => '10.50',
         ]);
     }
 
@@ -149,6 +152,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
             [
                 'order_id' => 'order-456',
                 'amount' => '100.00',
+                'authoritative_amount' => '100.00',
                 'description' => 'Test Order',
                 'payer_email' => 'customer@example.com',
                 'installments' => 3,
@@ -190,6 +194,7 @@ class MercadoPagoPaymentServiceTest extends TestCase
             [
                 'order_id' => 'order-123',
                 'amount' => '100.00',
+                'authoritative_amount' => '100.00',
                 'installments' => 12,
             ],
             ['payment_method_id' => 'visa']
@@ -245,6 +250,8 @@ class MercadoPagoPaymentServiceTest extends TestCase
         $acquisitionResult = MercadoPagoIdempotencyAcquisitionResult::acquiredNew($actionMock, 'test-owner-uuid');
 
         $mock->method('acquireAction')->willReturn($acquisitionResult);
+        $mock->method('generateDeterministicKey')
+            ->willReturn('123e4567-e89b-52d3-a456-426614174000');
         $mock->method('completeAction');
         return $mock;
     }

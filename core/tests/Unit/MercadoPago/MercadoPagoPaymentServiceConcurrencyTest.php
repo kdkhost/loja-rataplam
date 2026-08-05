@@ -116,6 +116,7 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
         $orderData = [
             'order_id' => null,
             'amount' => '10.50',
+            'authoritative_amount' => '10.50',
             'description' => 'Test Order',
             'payer_email' => 'customer@example.com',
         ];
@@ -206,6 +207,7 @@ class MercadoPagoPaymentServiceConcurrencyTest extends TestCase
         $result = $service->createPixPayment([
             'order_id' => null,
             'amount' => '10.50',
+            'authoritative_amount' => '10.50',
             'description' => 'Test Order',
             'payer_email' => 'customer@example.com',
         ]);

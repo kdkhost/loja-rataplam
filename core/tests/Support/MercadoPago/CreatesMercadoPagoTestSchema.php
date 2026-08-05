@@ -87,6 +87,7 @@ trait CreatesMercadoPagoTestSchema
             $table->unsignedBigInteger('user_id')->nullable();
             $table->decimal('total_amount', 12, 2)->default(0);
             $table->string('payment_status')->default('pending');
+            $table->text('payment_details')->nullable();
             $table->string('state_price')->nullable();
             $table->timestamps();
         });
@@ -151,7 +152,7 @@ trait CreatesMercadoPagoTestSchema
                 $table->string('currency', 3)->nullable();
                 $table->uuid('idempotency_key')->unique();
                 $table->string('request_fingerprint', 64)->nullable();
-                $table->string('mercadopago_operation_id')->nullable();
+                $table->string('mercadopago_operation_id')->nullable()->unique('mp_operation_id_unique');
                 $table->string('remote_status')->nullable();
                 $table->string('local_status')->default('pending');
                 $table->uuid('execution_owner')->nullable();
@@ -173,6 +174,7 @@ trait CreatesMercadoPagoTestSchema
                 $table->index('environment');
                 $table->index('local_status');
                 $table->index('created_at');
+                $table->index(['order_id', 'action', 'environment'], 'mp_order_action_environment');
                 $table->index(['execution_owner', 'execution_lease_expires_at'], 'mp_exec_owner_lease');
                 $table->index('execution_lease_expires_at', 'mp_exec_lease_expires');
             });
