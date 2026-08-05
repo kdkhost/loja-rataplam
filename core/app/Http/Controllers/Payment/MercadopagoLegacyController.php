@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Payment;
 
 use App\Helpers\PriceHelper;
 use App\Models\Item;
+use App\Models\Order;
+use App\Models\PaymentSetting;
 use App\Models\ShippingService;
+use App\Services\MercadoPago\MercadoPagoLegacyClient;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use MercadoPago;
 use Throwable;
 use Illuminate\Support\Facades\Log;
 
@@ -19,6 +21,8 @@ use Illuminate\Support\Facades\Log;
  */
 class MercadopagoLegacyController extends MercadopagoV2Controller
 {
+    public function __construct(protected MercadoPagoLegacyClient $legacyClient) {}
+
     public function store(Request $request)
     {
         $this->validateCheckout($request);
@@ -135,9 +139,8 @@ class MercadopagoLegacyController extends MercadopagoV2Controller
 
     protected function createPayment(Request $request, array $settings, array $checkout, string $paymentType)
     {
-        MercadoPago\SDK::setAccessToken($settings['token']);
-
-        $payment = new MercadoPago\Payment();
+        $this->legacyClient->configure($settings['token']);
+        $payment = $this->legacyClient->newPayment();
         $payment->transaction_amount = (float) $checkout['total_amount'];
         $payment->description = \App\Models\Setting::first()->title . ' - Pedido';
         $payment->external_reference = 'RTP-' . Carbon::now()->format('YmdHis') . '-' . Str::upper(Str::random(6));
@@ -156,7 +159,7 @@ class MercadopagoLegacyController extends MercadopagoV2Controller
             $payment->binary_mode = true;
         }
 
-        $payment->save();
+        $this->legacyClient->savePayment($payment);
 
         return [$payment, $pixExpiration];
     }
@@ -167,5 +170,65 @@ class MercadopagoLegacyController extends MercadopagoV2Controller
         Session::forget('cart');
         Session::forget('discount');
         Session::forget('coupon');
+    }
+
+    public function webhook(Request $request)
+    {
+        $paymentId = data_get($request->all(), 'data.id')
+            ?: $request->input('id')
+            ?: $request->query('id')
+            ?: $request->query('data_id');
+
+        if (!$paymentId) {
+            return response()->json(['status' => 'ignored']);
+        }
+
+        try {
+            $settings = $this->mercadoPagoSettings();
+            $this->legacyClient->configure($settings['token']);
+            $payment = $this->legacyClient->findPayment((string) $paymentId);
+        } catch (Throwable $exception) {
+            Log::warning('Falha ao consultar webhook Mercado Pago legado.', [
+                'payment_id' => $paymentId,
+                'exception_class' => get_class($exception),
+            ]);
+            return response()->json(['status' => 'error'], 500);
+        }
+
+        if (!$payment) {
+            return response()->json(['status' => 'not_found'], 404);
+        }
+
+        $order = Order::where('txnid', (string) $payment->id)->first();
+        if (!$order && $payment->external_reference) {
+            $order = Order::where('transaction_number', $payment->external_reference)->first();
+        }
+        if (!$order) {
+            return response()->json(['status' => 'order_not_found'], 404);
+        }
+
+        $details = json_decode($order->payment_details, true) ?: [];
+        $details['mercadopago']['status'] = $payment->status;
+        $details['mercadopago']['status_detail'] = $payment->status_detail;
+        $details['mercadopago']['updated_at'] = Carbon::now()->toDateTimeString();
+        $order->payment_details = json_encode($details, JSON_UNESCAPED_UNICODE);
+        if ($payment->status === 'approved') {
+            $order->payment_status = 'Paid';
+        }
+        $order->save();
+
+        return response()->json(['status' => 'ok']);
+    }
+
+    protected function mercadoPagoSettings(): array
+    {
+        $data = PaymentSetting::whereUniqueKeyword('mercadopago')->firstOrFail();
+
+        return array_merge([
+            'public_key' => '', 'token' => '', 'check_sandbox' => 1,
+            'pix_enabled' => 1, 'credit_card_enabled' => 1, 'debit_card_enabled' => 0,
+            'pix_expiration_minutes' => 30, 'fee_pass_to_customer' => 0,
+            'fee_percent' => 0, 'fee_fixed' => 0, 'max_installments' => 1,
+        ], $data->convertJsonData() ?: []);
     }
 }

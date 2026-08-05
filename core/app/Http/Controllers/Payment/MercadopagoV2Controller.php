@@ -11,7 +11,6 @@ use App\Models\Currency;
 use App\Models\Item;
 use App\Models\Notification;
 use App\Models\Order;
-use App\Models\PaymentSetting;
 use App\Models\PromoCode;
 use App\Models\Setting;
 use App\Models\ShippingService;
@@ -27,7 +26,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
-use MercadoPago;
 use Throwable;
 
 class MercadopagoV2Controller extends Controller
@@ -251,60 +249,6 @@ class MercadopagoV2Controller extends Controller
         }
     }
 
-    public function webhook(Request $request)
-    {
-        $paymentId = data_get($request->all(), 'data.id')
-            ?: $request->input('id')
-            ?: $request->query('id')
-            ?: $request->query('data_id');
-
-        if (!$paymentId) {
-            return response()->json(['status' => 'ignored']);
-        }
-
-        try {
-            $settings = $this->mercadoPagoSettings();
-            MercadoPago\SDK::setAccessToken($settings['token']);
-            $payment = MercadoPago\Payment::find_by_id($paymentId);
-        } catch (Throwable $exception) {
-            Log::warning('Falha ao consultar webhook Mercado Pago.', [
-                'payment_id' => $paymentId,
-                'message' => $exception->getMessage(),
-            ]);
-
-            return response()->json(['status' => 'error'], 500);
-        }
-
-        if (!$payment) {
-            return response()->json(['status' => 'not_found'], 404);
-        }
-
-        $order = Order::where('txnid', (string) $payment->id)->first();
-
-        if (!$order && $payment->external_reference) {
-            $order = Order::where('transaction_number', $payment->external_reference)->first();
-        }
-
-        if (!$order) {
-            return response()->json(['status' => 'order_not_found'], 404);
-        }
-
-        $details = json_decode($order->payment_details, true) ?: [];
-        $details['mercadopago']['status'] = $payment->status;
-        $details['mercadopago']['status_detail'] = $payment->status_detail;
-        $details['mercadopago']['updated_at'] = Carbon::now()->toDateTimeString();
-
-        $order->payment_details = json_encode($details, JSON_UNESCAPED_UNICODE);
-
-        if ($payment->status === 'approved') {
-            $order->payment_status = 'Paid';
-        }
-
-        $order->save();
-
-        return response()->json(['status' => 'ok']);
-    }
-
     protected function validateCheckout(Request $request)
     {
         $state = State::whereStatus(1)->count() != 0 ? 'required' : '';
@@ -379,26 +323,6 @@ class MercadopagoV2Controller extends Controller
         return Currency::where('is_default', 1)->first();
     }
 
-    protected function mercadoPagoSettings()
-    {
-        $data = PaymentSetting::whereUniqueKeyword('mercadopago')->firstOrFail();
-        $paydata = $data->convertJsonData() ?: [];
-
-        return array_merge([
-            'public_key' => '',
-            'token' => '',
-            'check_sandbox' => 1,
-            'pix_enabled' => 1,
-            'credit_card_enabled' => 1,
-            'debit_card_enabled' => 0,
-            'pix_expiration_minutes' => 30,
-            'fee_pass_to_customer' => 0,
-            'fee_percent' => 0,
-            'fee_fixed' => 0,
-            'max_installments' => 1,
-        ], $paydata);
-    }
-
     protected function resolvePaymentType(Request $request, array $settings)
     {
         $requested = $request->input('mercadopago_payment_type');
@@ -452,35 +376,6 @@ class MercadopagoV2Controller extends Controller
             'total_amount' => $calculated['totalDecimal'],
             'total_minor' => $calculated['totalMinor'],
         ];
-    }
-
-    protected function createPayment(Request $request, array $settings, array $checkout, string $paymentType)
-    {
-        MercadoPago\SDK::setAccessToken($settings['token']);
-
-        $payment = new MercadoPago\Payment();
-        $payment->transaction_amount = $checkout['total_amount'];
-        $payment->description = Setting::first()->title . ' - Pedido';
-        $payment->external_reference = 'RTP-' . Carbon::now()->format('YmdHis') . '-' . Str::upper(Str::random(6));
-        $payment->notification_url = route('front.mercadopago.webhook');
-        $payment->payer = $this->payer($request);
-
-        $pixExpiration = null;
-
-        if ($paymentType === 'pix') {
-            $pixExpiration = Carbon::now('America/Sao_Paulo')->addMinutes((int) $settings['pix_expiration_minutes']);
-            $payment->payment_method_id = 'pix';
-            $payment->date_of_expiration = $pixExpiration->format('Y-m-d\TH:i:s.000P');
-        } else {
-            $payment->token = $request->token;
-            $payment->installments = max(1, min((int) ($settings['max_installments'] ?? 1), (int) $request->input('installments', 1)));
-            $payment->payment_method_id = $request->paymentMethodId;
-            $payment->binary_mode = true;
-        }
-
-        $payment->save();
-
-        return [$payment, $pixExpiration];
     }
 
     protected function payer(Request $request)
