@@ -154,16 +154,25 @@ class ImageHelper
         File::put($destination, $contents);
     }
 
-    private static function deletePublicMirror($path, $name)
+    public static function deletePublicMirror($path, $name)
     {
         $file = self::publicMirrorPath($path, $name);
 
-        if (File::exists($file)) {
-            File::delete($file);
+        if (!File::exists($file)) {
+            return true;
         }
+
+        $publicStorage = public_path('storage');
+        $storageAppPublic = storage_path('app/public');
+
+        if (is_link($publicStorage) && realpath($publicStorage) === realpath($storageAppPublic)) {
+            return true;
+        }
+
+        return File::delete($file);
     }
 
-    private static function publicMirrorPath($path, $name)
+    public static function publicMirrorPath($path, $name)
     {
         return public_path('storage/' . trim($path, '/') . '/' . ltrim($name, '/'));
     }

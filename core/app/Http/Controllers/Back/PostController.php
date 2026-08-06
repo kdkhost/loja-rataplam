@@ -60,8 +60,10 @@ class PostController extends Controller
     {
 
         $request->validate([
-            'photo*' => 'required|image',
+            'photo' => 'required|array',
+            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'title' => 'required|unique:posts|max:255',
+            'category_id' => 'required|integer|exists:bcategories,id',
             'details' => 'required',
             'tags' => 'nullable|max:255'
         ]);
@@ -91,9 +93,10 @@ class PostController extends Controller
     public function update(Request $request, Post $post)
     {
         $request->validate([
-            'photo*' => 'image',
+            'photo' => 'sometimes|array',
+            'photo.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'title' => 'required|max:255|unique:posts,title,'.$post->id,
-            'category_id' => 'required',
+            'category_id' => 'required|integer|exists:bcategories,id',
             'details' => 'required',
             'tags' => 'nullable|max:255'
         ]);

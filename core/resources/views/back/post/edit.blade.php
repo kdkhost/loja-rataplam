@@ -41,7 +41,7 @@
 
                                     <div class="d-block">
 
-                                        @forelse(json_decode($post->photo,true) as $key => $photo)
+                                        @forelse(is_array($post->photo) ? $post->photo : [] as $key => $photo)
                                             <div class="single-g-item d-inline-block m-2">
 												@if ($key !=0)
 												<span data-toggle="modal" data-target="#confirm-delete" href="javascript:;"

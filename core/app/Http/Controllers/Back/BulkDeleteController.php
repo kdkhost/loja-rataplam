@@ -53,10 +53,18 @@ class BulkDeleteController extends Controller
         if ($request->table == 'posts') {
             foreach ($ids as $id) {
                 $id = (int)$id;
-                $post = Post::findOrFail($id);
-                $images = json_decode($post->photo, true);
-                foreach ($images as $image) {
-                    Storage::delete("images" . '/' . $image);
+                $post = Post::find($id);
+                if (!$post) {
+                    \Illuminate\Support\Facades\Log::warning('Blog: post não encontrado durante exclusão em massa.', [
+                        'table' => 'posts'
+                    ]);
+                    continue;
+                }
+                $images = $post->photo; // Using array accessor
+                if (is_array($images)) {
+                    foreach ($images as $image) {
+                        \App\Services\BlogFileService::deleteImage($image);
+                    }
                 }
                 $post->delete();
             }
